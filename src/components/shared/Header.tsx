@@ -101,7 +101,7 @@ const Header = () => {
                   {isAdmin && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center">
-                        <Shield className="mr-2 h-4 w-4" />
+                        <Shield className="h-4 w-4" />
                         Admin Panel
                       </Link>
                     </DropdownMenuItem>

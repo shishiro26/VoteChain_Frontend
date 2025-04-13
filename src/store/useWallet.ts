@@ -3,11 +3,20 @@ import { persist } from "zustand/middleware";
 import axios from "axios";
 import { toast } from "sonner";
 
+type Profile = {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  status: string;
+  email: string;
+};
+
 type WalletState = {
   wallet: string | null;
   connecting: boolean;
   is_profile_complete: boolean;
   role: string | null;
+  profile: Profile | null;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   setIsProfileComplete: (value: boolean) => void;
@@ -20,10 +29,10 @@ export const useWallet = create(
       connecting: false,
       is_profile_complete: false,
       role: null,
+      profile: null,
 
       connectWallet: async () => {
         set({ connecting: true });
-
         if (typeof window.ethereum === "undefined") {
           toast.error("MetaMask not found");
           set({ connecting: false });
@@ -44,8 +53,6 @@ export const useWallet = create(
             { withCredentials: true }
           );
 
-          console.log("loginResponse", loginResponse);
-
           if (loginResponse.status === 201) {
             const profileCompleted = loginResponse.data.profile_completed;
             set({ is_profile_complete: profileCompleted });
@@ -55,10 +62,27 @@ export const useWallet = create(
               { withCredentials: true }
             );
 
-            console.log("decodeResponse", decodeResponse);
-            const { wallet_address, role } = decodeResponse.data.data;
+            const {
+              first_name,
+              last_name,
+              wallet_address,
+              role,
+              phone_number,
+              status,
+              email,
+            } = decodeResponse.data.data;
 
-            set({ wallet: wallet_address, role });
+            set({
+              wallet: wallet_address,
+              role,
+              profile: {
+                first_name,
+                last_name,
+                phone_number,
+                status,
+                email,
+              },
+            });
 
             toast.success("Wallet Connected successfully");
           }
@@ -81,7 +105,12 @@ export const useWallet = create(
           console.error("Logout failed:", error);
           toast.error("Logout failed on server");
         } finally {
-          set({ wallet: null, is_profile_complete: false, role: null });
+          set({
+            wallet: null,
+            is_profile_complete: false,
+            role: null,
+            profile: null,
+          });
           toast.success("Wallet Disconnected");
         }
       },
@@ -92,6 +121,16 @@ export const useWallet = create(
     }),
     {
       name: "wallet-store",
+      partialize: (state) => ({
+        wallet: state.wallet,
+        connecting: state.connecting,
+        is_profile_complete: state.is_profile_complete,
+        role: state.role,
+        profile: state.profile,
+        connectWallet: state.connectWallet,
+        disconnectWallet: state.disconnectWallet,
+        setIsProfileComplete: state.setIsProfileComplete,
+      }),
     }
   )
 );

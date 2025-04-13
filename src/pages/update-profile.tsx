@@ -25,7 +25,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader } from "@/components/shared/loader";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
