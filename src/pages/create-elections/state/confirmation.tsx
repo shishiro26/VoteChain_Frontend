@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrub"
+import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb"
 import { ProgressSteps } from "@/components/ui/progress-steps"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

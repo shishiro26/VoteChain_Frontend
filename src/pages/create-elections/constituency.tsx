@@ -17,7 +17,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrub"
+import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb"
 
 // List of Indian states
 const INDIAN_STATES = [

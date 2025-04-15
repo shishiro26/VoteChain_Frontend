@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrub"
+import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb"
 import { CalendarPlus, FileSpreadsheet, MapPin } from "lucide-react"
 import Link from "next/link"
 
