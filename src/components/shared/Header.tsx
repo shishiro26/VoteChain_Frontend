@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useLocation } from "react-router";
-import { Menu, Shield, X } from "lucide-react";
+import { AlertTriangle, Menu, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "./mode-toggle.tsx";
@@ -21,10 +21,16 @@ const ADMIN_WALLETS = ["0x937dc20632378d010c5e21c12ce511f5512aff41"];
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { wallet, connecting, connectWallet, disconnectWallet } = useWallet();
+  const navigate = useNavigate();
+  const {
+    wallet,
+    connecting,
+    connectWallet,
+    disconnectWallet,
+    is_profile_complete,
+  } = useWallet();
 
   const pathname = location.pathname;
-
   const isAdmin = wallet && ADMIN_WALLETS.includes(wallet);
 
   const navigation = [
@@ -192,6 +198,26 @@ const Header = () => {
                 </Button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {wallet && !is_profile_complete && (
+        <div className="bg-amber-500/90 text-white py-2 px-4 text-center">
+          <div className="container mx-auto flex flex-wrap items-center justify-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            <p>
+              Your profile is incomplete. Please update your profile to access
+              all features.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-amber-400 hover:bg-white/90 hover:text-amber-500 dark:bg-white dark:text-white opacity-70 border-white dark:hover:opacity-100 transition-opacity"
+              onClick={() => navigate("/update-profile")}
+            >
+              Update Profile
+            </Button>
           </div>
         </div>
       )}

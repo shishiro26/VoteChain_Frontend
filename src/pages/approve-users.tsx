@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +14,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import {
   CheckCircle,
   Search,
@@ -27,7 +24,6 @@ import {
   X,
 } from "lucide-react";
 
-// Sample user data
 const PENDING_USERS = [
   {
     id: "1",
@@ -61,7 +57,7 @@ const PENDING_USERS = [
     lastName: "Singh",
     email: "vikram.singh@example.com",
     phone: "7654321098",
-    walletAddress: "0x3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v",
+    walletAddress: "0x3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2vw",
     state: "Karnataka",
     district: "Bengaluru",
     constituency: "Jayanagar",

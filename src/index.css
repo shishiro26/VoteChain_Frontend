@@ -7,18 +7,12 @@
   font-family: "Inter";
   src: local("Inter"), url("./assets/fonts/Inter_24pt-SemiBold.ttf");
   font-weight: normal;
+  font-display: block;
   font-style: normal;
 }
 
 body {
   font-family: "Inter";
-}
-
-@font-face {
-  font-family: "Inter";
-  src: url("/font/Inter.otf") format("opentype");
-  font-weight: normal;
-  font-style: normal;
 }
 
 @theme inline {

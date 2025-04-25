@@ -1,18 +1,37 @@
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
-import { Loader } from "@/components/ui/loader"
-import { Plus, Trash2, Upload, User } from "lucide-react"
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader } from "@/components/ui/loader";
+import { Plus, Trash2, Upload, User } from "lucide-react";
 
 // Sample elections data
 const ELECTIONS = [
@@ -36,26 +55,30 @@ const ELECTIONS = [
     title: "Uttar Pradesh By-Election",
     status: 0, // Upcoming
   },
-]
+];
 
 const candidateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   party: z.string().min(2, "Party name must be at least 2 characters"),
   description: z.string().optional(),
   image: z.any().optional(),
-})
+});
 
 const formSchema = z.object({
   electionId: z.string({
     required_error: "Please select an election",
   }),
-  candidates: z.array(candidateSchema).min(1, "At least one candidate is required"),
-})
+  candidates: z
+    .array(candidateSchema)
+    .min(1, "At least one candidate is required"),
+});
 
 export default function AddCandidatesPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [imagePreviews, setImagePreviews] = useState<Record<number, string>>({})
-//   const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<Record<number, string>>(
+    {}
+  );
+  //   const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,47 +86,50 @@ export default function AddCandidatesPage() {
       electionId: "",
       candidates: [{ name: "", party: "", description: "" }],
     },
-  })
+  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "candidates",
-  })
+  });
 
-  const handleImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleImageChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
     if (file) {
       // Create preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviews((prev) => ({
           ...prev,
           [index]: reader.result as string,
-        }))
-      }
-      reader.readAsDataURL(file)
+        }));
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Simulate API call to add candidates
     setTimeout(() => {
-      setIsSubmitting(false)
-    //   toast({
-    //     title: "Candidates Added",
-    //     description: `${values.candidates.length} candidates have been added to the election.`,
-    //   })
+      setIsSubmitting(false);
+      //   toast({
+      //     title: "Candidates Added",
+      //     description: `${values.candidates.length} candidates have been added to the election.`,
+      //   })
 
       // Reset form
       form.reset({
         electionId: "",
         candidates: [{ name: "", party: "", description: "" }],
-      })
-      setImagePreviews({})
-    }, 2000)
-  }
+      });
+      setImagePreviews({});
+    }, 2000);
+  };
 
   return (
     <div>
@@ -112,7 +138,9 @@ export default function AddCandidatesPage() {
       <Card className="max-w-4xl">
         <CardHeader>
           <CardTitle>Add Candidates to Election</CardTitle>
-          <CardDescription>Select an election and add candidates who will participate</CardDescription>
+          <CardDescription>
+            Select an election and add candidates who will participate
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -123,7 +151,10 @@ export default function AddCandidatesPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Election</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an election" />
@@ -132,12 +163,15 @@ export default function AddCandidatesPage() {
                       <SelectContent>
                         {ELECTIONS.map((election) => (
                           <SelectItem key={election.id} value={election.id}>
-                            {election.title} {election.status === 1 ? "(Ongoing)" : "(Upcoming)"}
+                            {election.title}{" "}
+                            {election.status === 1 ? "(Ongoing)" : "(Upcoming)"}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>Select the election for which you want to add candidates.</FormDescription>
+                    <FormDescription>
+                      Select the election for which you want to add candidates.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -150,7 +184,9 @@ export default function AddCandidatesPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ name: "", party: "", description: "" })}
+                    onClick={() =>
+                      append({ name: "", party: "", description: "" })
+                    }
                   >
                     <Plus className="h-4 w-4 mr-2" /> Add Candidate
                   </Button>
@@ -211,7 +247,10 @@ export default function AddCandidatesPage() {
                             <FormItem>
                               <FormLabel>Candidate Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. Rajesh Kumar" {...field} />
+                                <Input
+                                  placeholder="e.g. Rajesh Kumar"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -225,7 +264,10 @@ export default function AddCandidatesPage() {
                             <FormItem>
                               <FormLabel>Party Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. National Democratic Party" {...field} />
+                                <Input
+                                  placeholder="e.g. National Democratic Party"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -271,5 +313,5 @@ export default function AddCandidatesPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

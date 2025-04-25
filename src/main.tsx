@@ -5,13 +5,18 @@ import App from "./App.tsx";
 import { Toaster } from "sonner";
 import { BrowserRouter } from "react-router";
 import { ThemeProvider } from "./components/shared/theme-provider.tsx";
+import { ReactQueryProvider } from "./ReactQueryProvider.tsx";
+import { ConnectivityStatus } from "./components/shared/connectivity-monitor.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <Toaster richColors />
+        <ReactQueryProvider>
+          <Toaster richColors />
+        </ReactQueryProvider>
         <App />
+        <ConnectivityStatus />
       </ThemeProvider>
     </BrowserRouter>
   </StrictMode>

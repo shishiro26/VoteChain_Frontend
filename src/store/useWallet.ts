@@ -72,6 +72,21 @@ export const useWallet = create(
               email,
             } = decodeResponse.data.data;
 
+            if (
+              !first_name ||
+              !last_name ||
+              !phone_number ||
+              !status ||
+              !email
+            ) {
+              set({ is_profile_complete: false });
+              return;
+            }
+
+            console.log(
+              "FirstName,lastName,phoneNumber,status,email",
+              decodeResponse.data.data
+            );
             set({
               wallet: wallet_address,
               role,

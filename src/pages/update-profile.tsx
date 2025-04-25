@@ -33,6 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWallet } from "@/store/useWallet";
+import { formSchema } from "@/validations";
+import { useLocationStore } from "@/store/useLocation";
 
 const INDIAN_STATES = [
   "Andhra Pradesh",
@@ -73,7 +75,6 @@ const INDIAN_STATES = [
   "Puducherry",
 ];
 
-// Sample districts by state (simplified for demo)
 const DISTRICTS_BY_STATE: Record<string, string[]> = {
   "Andhra Pradesh": [
     "Anantapur",
@@ -162,49 +163,7 @@ const CONSTITUENCIES_BY_DISTRICT: Record<string, string[]> = {
     "Shivajinagar",
   ],
   "Central Delhi": ["Chandni Chowk", "Matia Mahal", "Ballimaran", "Karol Bagh"],
-  // Add more districts and constituencies as needed
 };
-
-const formSchema = z.object({
-  firstName: z.string().min(2, {
-    message: "First name must be at least 2 characters.",
-  }),
-  lastName: z.string().min(2, {
-    message: "Last name must be at least 2 characters.",
-  }),
-  phone: z
-    .string()
-    .min(10, {
-      message: "Phone number must be at least 10 digits.",
-    })
-    .regex(/^\d+$/, {
-      message: "Phone number must contain only digits.",
-    }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  pincode: z
-    .string()
-    .min(6, {
-      message: "Pincode must be 6 digits.",
-    })
-    .max(6, {
-      message: "Pincode must be 6 digits.",
-    })
-    .regex(/^\d+$/, {
-      message: "Pincode must contain only digits.",
-    }),
-  state: z.string({
-    required_error: "Please select a state.",
-  }),
-  district: z.string({
-    required_error: "Please select a district.",
-  }),
-  constituency: z.string({
-    required_error: "Please select a constituency.",
-  }),
-  image: z.instanceof(File).optional().or(z.literal(undefined)),
-});
 
 export default function UpdateProfile() {
   const [isVerifying, setIsVerifying] = useState(false);
@@ -214,7 +173,13 @@ export default function UpdateProfile() {
     string[]
   >([]);
   const { wallet, setIsProfileComplete } = useWallet();
+  const { states, fetchStates } = useLocationStore();
+  console.log("States", states);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    fetchStates();
+  }, [fetchStates]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -223,18 +188,16 @@ export default function UpdateProfile() {
       lastName: "",
       phone: "",
       email: "",
-      pincode: "",
       state: "",
+      mandal: "",
       district: "",
       constituency: "",
     },
   });
 
-  // Watch for state changes to update districts
   const selectedState = form.watch("state");
   const selectedDistrict = form.watch("district");
 
-  // Update districts when state changes
   React.useEffect(() => {
     if (selectedState) {
       const districts = DISTRICTS_BY_STATE[selectedState] || [];
@@ -247,7 +210,6 @@ export default function UpdateProfile() {
     }
   }, [selectedState, form]);
 
-  // Update constituencies when district changes
   React.useEffect(() => {
     if (selectedDistrict) {
       const constituencies = CONSTITUENCIES_BY_DISTRICT[selectedDistrict] || [];
@@ -260,6 +222,7 @@ export default function UpdateProfile() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!wallet) {
+      console.log("values", values);
       //   toast({
       //     title: "Wallet not connected",
       //     description: "Please connect your MetaMask wallet first",
@@ -441,7 +404,7 @@ export default function UpdateProfile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="pincode"
+                      name="mandal"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-foreground">
@@ -476,9 +439,9 @@ export default function UpdateProfile() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {INDIAN_STATES.map((state) => (
-                                <SelectItem key={state} value={state}>
-                                  {state}
+                              {states.map((state) => (
+                                <SelectItem key={state.name} value={state.name}>
+                                  {state.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
