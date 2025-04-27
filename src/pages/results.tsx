@@ -1,7 +1,11 @@
-"use client"
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useWallet } from "@/context/wallet-context"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useWallet } from "@/store/useWallet";
 import {
   BarChart,
   Bar,
@@ -14,7 +18,7 @@ import {
   Pie,
   Cell,
   Legend,
-} from "recharts"
+} from "recharts";
 
 // Sample data for charts
 const barData = [
@@ -23,21 +27,20 @@ const barData = [
   { name: "Candidate C", votes: 2000 },
   { name: "Candidate D", votes: 2780 },
   { name: "Candidate E", votes: 1890 },
-]
+];
 
 const pieData = [
   { name: "Candidate A", value: 400 },
   { name: "Candidate B", value: 300 },
   { name: "Candidate C", value: 300 },
   { name: "Candidate D", value: 200 },
-]
+];
 
 // Update the chart colors to match the new theme
-const COLORS = ["#1e70eb", "#34d399", "#fbbf24", "#f87171"]
+const COLORS = ["#1e70eb", "#34d399", "#fbbf24", "#f87171"];
 
 export default function ResultsPage() {
-  const { wallet } = useWallet()
-
+  const { wallet } = useWallet();
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-center">Election Results</h1>
@@ -83,13 +86,18 @@ export default function ResultsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
                   outerRadius={80}
                   fill="#1e70eb"
                   dataKey="value"
                 >
                   {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -103,7 +111,10 @@ export default function ResultsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Blockchain Verification</CardTitle>
-          <CardDescription>All votes are recorded on the blockchain for transparency and verification</CardDescription>
+          <CardDescription>
+            All votes are recorded on the blockchain for transparency and
+            verification
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -118,19 +129,25 @@ export default function ResultsPage() {
               </thead>
               <tbody>
                 <tr className="border-b hover:bg-muted/50">
-                  <td className="py-2 px-4 font-mono text-xs">0x8a35d54c...b72f</td>
+                  <td className="py-2 px-4 font-mono text-xs">
+                    0x8a35d54c...b72f
+                  </td>
                   <td className="py-2 px-4">National General Election</td>
                   <td className="py-2 px-4">2023-11-05 14:32:15</td>
                   <td className="py-2 px-4 text-green-500">Confirmed</td>
                 </tr>
                 <tr className="border-b hover:bg-muted/50">
-                  <td className="py-2 px-4 font-mono text-xs">0x7b42e98d...c45a</td>
+                  <td className="py-2 px-4 font-mono text-xs">
+                    0x7b42e98d...c45a
+                  </td>
                   <td className="py-2 px-4">University Student Council</td>
                   <td className="py-2 px-4">2023-10-28 09:15:42</td>
                   <td className="py-2 px-4 text-green-500">Confirmed</td>
                 </tr>
                 <tr className="hover:bg-muted/50">
-                  <td className="py-2 px-4 font-mono text-xs">0x3f91a2c7...e83d</td>
+                  <td className="py-2 px-4 font-mono text-xs">
+                    0x3f91a2c7...e83d
+                  </td>
                   <td className="py-2 px-4">Local Municipal Election</td>
                   <td className="py-2 px-4">2023-11-02 16:45:30</td>
                   <td className="py-2 px-4 text-amber-500">Pending</td>
@@ -141,5 +158,5 @@ export default function ResultsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,47 +1,60 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useWallet } from "@/context/wallet-context"
-import { Badge } from "@/components/ui/badge"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Calendar, CheckCircle, ChevronLeft, Clock, Crown, MapPin, Users, VoteIcon } from "lucide-react"
-import { format } from "date-fns"
-import { toast } from "sonner"
-import { Loader } from "@/components/ui/loader"
-import Link from "next/link"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import {
+  Calendar,
+  CheckCircle,
+  ChevronLeft,
+  Clock,
+  Crown,
+  MapPin,
+  Users,
+  VoteIcon,
+} from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { Loader } from "@/components/ui/loader";
+import { Link } from "react-router";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useWallet } from "@/store/useWallet";
 
 // Election model type
 interface Election {
-  id: string
-  title: string
-  purpose: string
-  start_date: Date
-  end_date: Date
-  state: string
-  district: string
-  status: number // 0 = Upcoming, 1 = Ongoing, 2 = Completed
-  total_votes: number
-  constituency_id: string
-  constituency_name: string // Assume populated
-  created_at: Date
-  updated_at: Date
-  voters?: string[] // Array of wallet addresses that have voted
+  id: string;
+  title: string;
+  purpose: string;
+  start_date: Date;
+  end_date: Date;
+  state: string;
+  district: string;
+  status: number; // 0 = Upcoming, 1 = Ongoing, 2 = Completed
+  total_votes: number;
+  constituency_id: string;
+  constituency_name: string; // Assume populated
+  created_at: Date;
+  updated_at: Date;
+  voters?: string[]; // Array of wallet addresses that have voted
 }
 
 // Candidate model type
 interface Candidate {
-  id: string
-  name: string
-  party: string
-  image: string
-  description?: string
-  election_id: string
-  votes: number
+  id: string;
+  name: string;
+  party: string;
+  image: string;
+  description?: string;
+  election_id: string;
+  votes: number;
 }
 
 // Sample elections data
@@ -140,11 +153,10 @@ const SAMPLE_ELECTIONS: Record<string, Election> = {
     constituency_name: "Chennai North",
     created_at: new Date("2023-07-15"),
     updated_at: new Date("2023-08-21"),
-    voters: ["0x1234567890123456789012345678901234567890"], // Example voter
+    voters: ["0x1234567890123456789012345678901234567890"],
   },
-}
+};
 
-// Sample candidates data
 const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
   "1": [
     {
@@ -184,7 +196,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Suresh Patel",
       party: "Maharashtra Development Front",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Local businessman with strong community ties. Focused on urban development and job creation.",
+      description:
+        "Local businessman with strong community ties. Focused on urban development and job creation.",
       election_id: "2",
       votes: 0,
     },
@@ -205,7 +218,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Ramesh Rao",
       party: "People's Democratic Front",
       image: "/placeholder.svg?height=100&width=100",
-      description: "IT professional turned politician. Focused on smart city initiatives and digital governance.",
+      description:
+        "IT professional turned politician. Focused on smart city initiatives and digital governance.",
       election_id: "3",
       votes: 3200,
     },
@@ -224,7 +238,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Venkat Reddy",
       party: "Urban Development Alliance",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Architect and urban planner. Promises to improve city infrastructure and public spaces.",
+      description:
+        "Architect and urban planner. Promises to improve city infrastructure and public spaces.",
       election_id: "3",
       votes: 2750,
     },
@@ -235,7 +250,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Neha Gupta",
       party: "Citizen's Coalition",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Community organizer and social worker. Focused on inclusive development and citizen participation.",
+      description:
+        "Community organizer and social worker. Focused on inclusive development and citizen participation.",
       election_id: "4",
       votes: 2100,
     },
@@ -266,7 +282,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Aditya Singh",
       party: "Uttar Pradesh People's Party",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Young leader with a background in law. Focused on legal reforms and youth empowerment.",
+      description:
+        "Young leader with a background in law. Focused on legal reforms and youth empowerment.",
       election_id: "5",
       votes: 0,
     },
@@ -275,7 +292,8 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Rekha Yadav",
       party: "Progressive Democratic Front",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Experienced politician with a strong focus on rural development and farmer welfare.",
+      description:
+        "Experienced politician with a strong focus on rural development and farmer welfare.",
       election_id: "5",
       votes: 0,
     },
@@ -306,142 +324,151 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
       name: "Anitha Rajan",
       party: "Progressive Alliance",
       image: "/placeholder.svg?height=100&width=100",
-      description: "Social activist focused on women's empowerment and education in rural areas.",
+      description:
+        "Social activist focused on women's empowerment and education in rural areas.",
       election_id: "6",
       votes: 1500,
     },
   ],
-}
+};
 
 export default function ElectionDetailPage() {
-  const { wallet, isProfileComplete } = useWallet()
-  const router = useRouter()
-  const params = useParams()
-//   const { toast } = useToast()
-  const [selectedCandidate, setSelectedCandidate] = useState<string>("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [hasVoted, setHasVoted] = useState(false)
-  const [election, setElection] = useState<Election | null>(null)
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [activeTab, setActiveTab] = useState("details")
-  const electionId = params.electionId as string
+  const { wallet, is_profile_complete } = useWallet();
+  const navigate = useNavigate();
+  const location = useLocation();
+  //   const { toast } = useToast()
+  const [selectedCandidate, setSelectedCandidate] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [election, setElection] = useState<Election | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [activeTab, setActiveTab] = useState("details");
+  const electionId = location.pathname.split("/").pop() || "";
 
   useEffect(() => {
     if (!wallet) {
-      router.push("/")
-      return
+      navigate("/");
+      return;
     }
 
-    if (!isProfileComplete) {
-      router.push("/update-profile")
-      return
+    if (!is_profile_complete) {
+      navigate("/update-profile");
+      return;
     }
 
-    // Fetch election data
-    const electionData = SAMPLE_ELECTIONS[electionId]
+    const electionData = SAMPLE_ELECTIONS[electionId];
     if (!electionData) {
-    //   toast({
-    //     title: "Election Not Found",
-    //     description: "The requested election could not be found.",
-    //     variant: "destructive",
-    //   })
-      router.push("/vote")
-      return
+      navigate("/vote");
+      return;
     }
 
     // Check if user has already voted
     if (electionData.voters?.includes(wallet)) {
-      setHasVoted(true)
+      setHasVoted(true);
     }
 
-    setElection(electionData)
-    setCandidates(SAMPLE_CANDIDATES[electionId] || [])
-  }, [wallet, isProfileComplete, electionId, router, toast])
+    setElection(electionData);
+    setCandidates(SAMPLE_CANDIDATES[electionId] || []);
+  }, [wallet, is_profile_complete, electionId, navigate, toast]);
 
   const handleVote = async () => {
     if (!selectedCandidate) {
-    //   toast({
-    //     title: "No Candidate Selected",
-    //     description: "Please select a candidate to vote for.",
-    //     variant: "destructive",
-    //   })
-      return
+      //   toast({
+      //     title: "No Candidate Selected",
+      //     description: "Please select a candidate to vote for.",
+      //     variant: "destructive",
+      //   })
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Simulate API call to record vote
     setTimeout(() => {
       // Update local state to reflect vote
       if (election) {
-        election.voters = [...(election.voters || []), wallet || ""]
-        election.total_votes += 1
+        election.voters = [...(election.voters || []), wallet || ""];
+        election.total_votes += 1;
       }
 
-      setIsSubmitting(false)
-      setHasVoted(true)
+      setIsSubmitting(false);
+      setHasVoted(true);
 
-    //   toast({
-    //     title: "Vote Recorded",
-    //     description: "Your vote has been successfully recorded on the blockchain.",
-    //   })
+      //   toast({
+      //     title: "Vote Recorded",
+      //     description: "Your vote has been successfully recorded on the blockchain.",
+      //   })
 
       // Redirect to confirmation or home after a short delay
       setTimeout(() => {
-        router.push("/vote")
-      }, 2000)
-    }, 3000)
-  }
+        navigate("/vote");
+      }, 2000);
+    }, 3000);
+  };
 
   // Helper function to render status badge
   const renderStatusBadge = (status: number) => {
     switch (status) {
       case 0:
         return (
-          <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+          <Badge
+            variant="outline"
+            className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200"
+          >
             <Clock className="h-3 w-3 mr-1" />
             Upcoming
           </Badge>
-        )
+        );
       case 1:
         return (
-          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200"
+          >
             <CheckCircle className="h-3 w-3 mr-1" />
             Ongoing
           </Badge>
-        )
+        );
       case 2:
         return (
-          <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">
+          <Badge
+            variant="outline"
+            className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200"
+          >
             <CheckCircle className="h-3 w-3 mr-1" />
             Completed
           </Badge>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   // Helper function to find the winner candidate
   const getWinnerCandidate = (candidates: Candidate[]) => {
-    if (!candidates.length) return null
-    return candidates.reduce((prev, current) => (prev.votes > current.votes ? prev : current))
-  }
+    if (!candidates.length) return null;
+    return candidates.reduce((prev, current) =>
+      prev.votes > current.votes ? prev : current
+    );
+  };
 
   if (!election) {
     return (
       <div className="container mx-auto px-4 py-12 flex justify-center items-center">
         <Loader size="lg" text="Loading election details..." />
       </div>
-    )
+    );
   }
 
-  const winner = election.status === 2 ? getWinnerCandidate(candidates) : null
+  const winner = election.status === 2 ? getWinnerCandidate(candidates) : null;
 
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="mb-6">
-        <Link href="/vote" className="inline-flex items-center text-primary hover:underline">
+        <Link
+          to="/vote"
+          className="inline-flex items-center text-primary hover:underline"
+        >
           <ChevronLeft className="h-4 w-4 mr-1" /> Back to Elections
         </Link>
       </div>
@@ -451,7 +478,9 @@ export default function ElectionDetailPage() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-2xl">{election.title}</CardTitle>
-              <CardDescription className="mt-1">{election.purpose}</CardDescription>
+              <CardDescription className="mt-1">
+                {election.purpose}
+              </CardDescription>
             </div>
             <div>{renderStatusBadge(election.status)}</div>
           </div>
@@ -462,13 +491,15 @@ export default function ElectionDetailPage() {
               <div className="flex items-center text-sm">
                 <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span>
-                  {format(election.start_date, "MMM d, yyyy")} - {format(election.end_date, "MMM d, yyyy")}
+                  {format(election.start_date, "MMM d, yyyy")} -{" "}
+                  {format(election.end_date, "MMM d, yyyy")}
                 </span>
               </div>
               <div className="flex items-center text-sm">
                 <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span>
-                  {election.state}, {election.district}, {election.constituency_name}
+                  {election.state}, {election.district},{" "}
+                  {election.constituency_name}
                 </span>
               </div>
               <div className="flex items-center text-sm">
@@ -479,12 +510,14 @@ export default function ElectionDetailPage() {
             <div className="space-y-3">
               {election.status === 1 && (
                 <div className="text-sm">
-                  <span className="font-medium">{election.total_votes}</span> votes cast so far
+                  <span className="font-medium">{election.total_votes}</span>{" "}
+                  votes cast so far
                 </div>
               )}
               {election.status === 2 && (
                 <div className="text-sm">
-                  <span className="font-medium">{election.total_votes}</span> total votes
+                  <span className="font-medium">{election.total_votes}</span>{" "}
+                  total votes
                 </div>
               )}
               {election.status === 2 && winner && (
@@ -507,7 +540,9 @@ export default function ElectionDetailPage() {
         <TabsList>
           <TabsTrigger value="details">Election Details</TabsTrigger>
           <TabsTrigger value="candidates">Candidates</TabsTrigger>
-          {election.status === 2 && <TabsTrigger value="results">Results</TabsTrigger>}
+          {election.status === 2 && (
+            <TabsTrigger value="results">Results</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="details" className="mt-6">
@@ -524,22 +559,25 @@ export default function ElectionDetailPage() {
                 <div>
                   <h3 className="text-lg font-medium mb-2">Eligibility</h3>
                   <p className="text-muted-foreground">
-                    All registered voters in the {election.constituency_name} constituency of {election.district},{" "}
-                    {election.state} are eligible to vote in this election.
+                    All registered voters in the {election.constituency_name}{" "}
+                    constituency of {election.district}, {election.state} are
+                    eligible to vote in this election.
                   </p>
                 </div>
                 <div>
                   <h3 className="text-lg font-medium mb-2">Voting Period</h3>
                   <p className="text-muted-foreground">
-                    Voting begins on {format(election.start_date, "MMMM d, yyyy")} and ends on{" "}
+                    Voting begins on{" "}
+                    {format(election.start_date, "MMMM d, yyyy")} and ends on{" "}
                     {format(election.end_date, "MMMM d, yyyy")}.
                   </p>
                 </div>
                 <div>
                   <h3 className="text-lg font-medium mb-2">Verification</h3>
                   <p className="text-muted-foreground">
-                    All votes are recorded on the blockchain for transparency and verification. Each voter can cast only
-                    one vote, and the voting process is secured using blockchain technology.
+                    All votes are recorded on the blockchain for transparency
+                    and verification. Each voter can cast only one vote, and the
+                    voting process is secured using blockchain technology.
                   </p>
                 </div>
               </div>
@@ -550,7 +588,10 @@ export default function ElectionDetailPage() {
         <TabsContent value="candidates" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {candidates.map((candidate) => (
-              <Card key={candidate.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={candidate.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-4">
@@ -561,8 +602,14 @@ export default function ElectionDetailPage() {
                       />
                     </div>
                     <h3 className="text-lg font-medium">{candidate.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{candidate.party}</p>
-                    {candidate.description && <p className="text-sm text-muted-foreground">{candidate.description}</p>}
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {candidate.party}
+                    </p>
+                    {candidate.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {candidate.description}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -575,15 +622,20 @@ export default function ElectionDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Election Results</CardTitle>
-                <CardDescription>Final vote counts for all candidates</CardDescription>
+                <CardDescription>
+                  Final vote counts for all candidates
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   {candidates
                     .sort((a, b) => b.votes - a.votes)
-                    .map((candidate, index) => {
-                      const isWinner = winner?.id === candidate.id
-                      const percentage = Math.round((candidate.votes / election.total_votes) * 100) || 0
+                    .map((candidate) => {
+                      const isWinner = winner?.id === candidate.id;
+                      const percentage =
+                        Math.round(
+                          (candidate.votes / election.total_votes) * 100
+                        ) || 0;
 
                       return (
                         <div key={candidate.id} className="relative">
@@ -603,24 +655,37 @@ export default function ElectionDetailPage() {
                               </div>
                               <div>
                                 <p className="font-medium">
-                                  {candidate.name} {isWinner && <span className="text-green-600">(Winner)</span>}
+                                  {candidate.name}{" "}
+                                  {isWinner && (
+                                    <span className="text-green-600">
+                                      (Winner)
+                                    </span>
+                                  )}
                                 </p>
-                                <p className="text-xs text-muted-foreground">{candidate.party}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {candidate.party}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-medium">{candidate.votes} votes</p>
-                              <p className="text-xs text-muted-foreground">{percentage}% of total</p>
+                              <p className="font-medium">
+                                {candidate.votes} votes
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {percentage}% of total
+                              </p>
                             </div>
                           </div>
                           <div className="w-full bg-muted rounded-full h-2.5">
                             <div
-                              className={`h-2.5 rounded-full ${isWinner ? "bg-green-500" : "bg-primary/60"}`}
+                              className={`h-2.5 rounded-full ${
+                                isWinner ? "bg-green-500" : "bg-primary/60"
+                              }`}
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
                         </div>
-                      )
+                      );
                     })}
                 </div>
               </CardContent>
@@ -637,9 +702,12 @@ export default function ElectionDetailPage() {
                 <CheckCircle className="h-16 w-16 mx-auto text-green-500 mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Vote Already Cast</h2>
                 <p className="text-muted-foreground mb-6">
-                  You have already voted in this election. Your vote has been recorded on the blockchain.
+                  You have already voted in this election. Your vote has been
+                  recorded on the blockchain.
                 </p>
-                <Button onClick={() => router.push("/vote")}>Return to Elections</Button>
+                <Button onClick={() => navigate("/vote")}>
+                  Return to Elections
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -647,19 +715,28 @@ export default function ElectionDetailPage() {
               <h2 className="text-2xl font-bold mb-6">Cast Your Vote</h2>
 
               <div className="mb-8">
-                <RadioGroup value={selectedCandidate} onValueChange={setSelectedCandidate}>
+                <RadioGroup
+                  value={selectedCandidate}
+                  onValueChange={setSelectedCandidate}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {candidates.map((candidate) => (
                       <Card
                         key={candidate.id}
                         className={`hover:shadow-md transition-shadow cursor-pointer ${
-                          selectedCandidate === candidate.id ? "ring-2 ring-primary" : ""
+                          selectedCandidate === candidate.id
+                            ? "ring-2 ring-primary"
+                            : ""
                         }`}
                         onClick={() => setSelectedCandidate(candidate.id)}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
-                            <RadioGroupItem value={candidate.id} id={candidate.id} className="mt-1" />
+                            <RadioGroupItem
+                              value={candidate.id}
+                              id={candidate.id}
+                              className="mt-1"
+                            />
                             <div className="flex-1">
                               <div className="flex items-center space-x-4">
                                 <img
@@ -668,10 +745,15 @@ export default function ElectionDetailPage() {
                                   className="w-16 h-16 rounded-full object-cover border"
                                 />
                                 <div>
-                                  <Label htmlFor={candidate.id} className="text-lg font-medium cursor-pointer">
+                                  <Label
+                                    htmlFor={candidate.id}
+                                    className="text-lg font-medium cursor-pointer"
+                                  >
                                     {candidate.name}
                                   </Label>
-                                  <p className="text-sm text-muted-foreground">{candidate.party}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {candidate.party}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -684,7 +766,12 @@ export default function ElectionDetailPage() {
               </div>
 
               <div className="flex justify-center">
-                <Button size="lg" onClick={handleVote} disabled={!selectedCandidate || isSubmitting} className="px-8">
+                <Button
+                  size="lg"
+                  onClick={handleVote}
+                  disabled={!selectedCandidate || isSubmitting}
+                  className="px-8"
+                >
                   {isSubmitting ? (
                     <>
                       <Loader size="sm" className="mr-2" /> Recording Vote...
@@ -701,5 +788,5 @@ export default function ElectionDetailPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -30,7 +30,7 @@ const Header = () => {
   } = useWallet();
 
   const pathname = location.pathname;
-  const isAdmin = role;
+  const isAdmin = role === "admin";
 
   const navigation = [
     { name: "Home", to: "/" },

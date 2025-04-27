@@ -1,10 +1,15 @@
-"use client"
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb"
-import { CalendarPlus, FileSpreadsheet, MapPin } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb";
+import { CalendarPlus, FileSpreadsheet, MapPin } from "lucide-react";
+import { Link } from "react-router";
 
 export default function CreateElectionPage() {
   return (
@@ -20,13 +25,15 @@ export default function CreateElectionPage() {
               Create State-Level Election
             </CardTitle>
             <CardDescription>
-              Create an election that covers an entire state with multiple constituencies
+              Create an election that covers an entire state with multiple
+              constituencies
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <p className="text-muted-foreground mb-4">
-              State-level elections allow voters from across the state to participate. You'll be able to upload
-              candidate data using a spreadsheet template.
+              State-level elections allow voters from across the state to
+              participate. You'll be able to upload candidate data using a
+              spreadsheet template.
             </p>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mb-4">
               <li>Covers all constituencies in a state</li>
@@ -36,7 +43,7 @@ export default function CreateElectionPage() {
             </ul>
           </CardContent>
           <CardFooter className="border-t border-border pt-4">
-            <Link href="/admin/create-election/state" className="w-full">
+            <Link to="/admin/create-election/state" className="w-full">
               <Button className="w-full">
                 <CalendarPlus className="mr-2 h-4 w-4" /> Create State Election
               </Button>
@@ -50,12 +57,16 @@ export default function CreateElectionPage() {
               <FileSpreadsheet className="mr-2 h-5 w-5" />
               Create Constituency-Level Election
             </CardTitle>
-            <CardDescription>Create an election for a specific constituency with individual candidates</CardDescription>
+            <CardDescription>
+              Create an election for a specific constituency with individual
+              candidates
+            </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <p className="text-muted-foreground mb-4">
-              Constituency-level elections are focused on a specific area. You'll add candidates individually with
-              detailed information for each.
+              Constituency-level elections are focused on a specific area.
+              You'll add candidates individually with detailed information for
+              each.
             </p>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mb-4">
               <li>Targeted to a specific constituency</li>
@@ -65,7 +76,7 @@ export default function CreateElectionPage() {
             </ul>
           </CardContent>
           <CardFooter className="border-t border-border pt-4">
-            <Link href="/admin/create-election/constituency" className="w-full">
+            <Link to="/admin/create-election/constituency" className="w-full">
               <Button className="w-full">
                 <MapPin className="mr-2 h-4 w-4" /> Create Constituency Election
               </Button>
@@ -74,5 +85,5 @@ export default function CreateElectionPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

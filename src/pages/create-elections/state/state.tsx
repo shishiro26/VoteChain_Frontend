@@ -1,22 +1,44 @@
-"use client"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb"
-import { ProgressSteps } from "@/components/ui/progress-steps"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb";
+import { ProgressSteps } from "@/components/ui/progress-steps";
+import { useNavigate } from "react-router";
 
 // List of Indian states
 const INDIAN_STATES = [
@@ -56,7 +78,7 @@ const INDIAN_STATES = [
   "Ladakh",
   "Lakshadweep",
   "Puducherry",
-]
+];
 
 const formSchema = z.object({
   title: z.string().min(5, {
@@ -75,11 +97,11 @@ const formSchema = z.object({
     required_error: "State is required.",
   }),
   status: z.string().default("0"), // 0 = Upcoming
-})
+});
 
 export default function CreateStateElectionPage() {
-  const router = useRouter()
-//   const { toast } = useToast()
+  const navigate = useNavigate();
+  //   const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,8 +110,10 @@ export default function CreateStateElectionPage() {
       purpose: "",
       state: "",
       status: "0",
+      startDate: new Date(),
+      endDate: new Date(new Date().setDate(new Date().getDate() + 7)),
     },
-  })
+  });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Validate dates
@@ -97,12 +121,12 @@ export default function CreateStateElectionPage() {
       form.setError("endDate", {
         type: "manual",
         message: "End date must be after start date.",
-      })
-      return
+      });
+      return;
     }
 
     // Store the form data in localStorage for the next step
-    localStorage.setItem("stateElectionData", JSON.stringify(values))
+    localStorage.setItem("stateElectionData", JSON.stringify(values));
 
     // Simulate API call to create election
     // toast({
@@ -111,22 +135,30 @@ export default function CreateStateElectionPage() {
     // })
 
     // Redirect to template upload page
-    router.push("/admin/create-election/state/upload-template")
-  }
+    navigate("/admin/create-election/state/upload-template");
+  };
 
   return (
     <div>
       <AdminBreadcrumb
-        items={[{ label: "Create Election", href: "/admin/create-election" }, { label: "State Election" }]}
+        items={[
+          { label: "Create Election", href: "/admin/create-election" },
+          { label: "State Election" },
+        ]}
       />
       <h1 className="text-3xl font-bold mb-4">Create State-Level Election</h1>
 
-      <ProgressSteps steps={["Election Details", "Upload Template", "Confirmation"]} currentStep={0} />
+      <ProgressSteps
+        steps={["Election Details", "Upload Template", "Confirmation"]}
+        currentStep={0}
+      />
 
       <Card className="max-w-4xl">
         <CardHeader>
           <CardTitle>Election Details</CardTitle>
-          <CardDescription>Fill in the details to create a new state-level election</CardDescription>
+          <CardDescription>
+            Fill in the details to create a new state-level election
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -138,10 +170,14 @@ export default function CreateStateElectionPage() {
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Maharashtra State Assembly Election 2023" {...field} />
+                      <Input
+                        placeholder="e.g. Maharashtra State Assembly Election 2023"
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>
-                      The official title of the election that will be displayed to voters.
+                      The official title of the election that will be displayed
+                      to voters.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +197,10 @@ export default function CreateStateElectionPage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>A brief description of the purpose and scope of this election.</FormDescription>
+                    <FormDescription>
+                      A brief description of the purpose and scope of this
+                      election.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -181,10 +220,14 @@ export default function CreateStateElectionPage() {
                               variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
+                                !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -199,7 +242,9 @@ export default function CreateStateElectionPage() {
                           />
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>The date when voting will begin.</FormDescription>
+                      <FormDescription>
+                        The date when voting will begin.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -218,10 +263,14 @@ export default function CreateStateElectionPage() {
                               variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
+                                !field.value && "text-muted-foreground"
                               )}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -232,13 +281,17 @@ export default function CreateStateElectionPage() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date() || (form.getValues("startDate") && date < form.getValues("startDate"))
+                              date < new Date() ||
+                              (form.getValues("startDate") &&
+                                date < form.getValues("startDate"))
                             }
                             initialFocus
                           />
                         </PopoverContent>
                       </Popover>
-                      <FormDescription>The date when voting will end.</FormDescription>
+                      <FormDescription>
+                        The date when voting will end.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -251,7 +304,10 @@ export default function CreateStateElectionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a state" />
@@ -265,7 +321,9 @@ export default function CreateStateElectionPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>The state where this election will be conducted.</FormDescription>
+                    <FormDescription>
+                      The state where this election will be conducted.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -277,7 +335,10 @@ export default function CreateStateElectionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
@@ -289,7 +350,8 @@ export default function CreateStateElectionPage() {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      The current status of the election. Usually set to "Upcoming" when creating.
+                      The current status of the election. Usually set to
+                      "Upcoming" when creating.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -297,7 +359,11 @@ export default function CreateStateElectionPage() {
               />
 
               <div className="flex justify-end space-x-4">
-                <Button variant="outline" type="button" onClick={() => router.push("/admin/create-election")}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => router.push("/admin/create-election")}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">Continue to Template Upload</Button>
@@ -307,5 +373,5 @@ export default function CreateStateElectionPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

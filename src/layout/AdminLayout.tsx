@@ -6,7 +6,7 @@ import React from "react";
 const AdminLayout = () => {
   const { wallet, role } = useWallet();
   const navigate = useNavigate();
-  const is_admin = role === "ADMIN";
+  const is_admin = role === "admin";
 
   React.useEffect(() => {
     if (!is_admin || !wallet) {

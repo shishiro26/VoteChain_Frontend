@@ -1,13 +1,13 @@
-import Link from "next/link"
-import { ChevronRight, Home } from "lucide-react"
+import { Link } from "react-router";
+import { ChevronRight, Home } from "lucide-react";
 
 interface BreadcrumbItem {
-  label: string
-  href?: string
+  label: string;
+  href?: string;
 }
 
 interface AdminBreadcrumbProps {
-  items: BreadcrumbItem[]
+  items: BreadcrumbItem[];
 }
 
 export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
@@ -16,7 +16,7 @@ export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         <li className="inline-flex items-center">
           <Link
-            href="/admin"
+            to="/admin"
             className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             <Home className="w-4 h-4 mr-2" />
@@ -29,18 +29,20 @@ export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
               {item.href ? (
                 <Link
-                  href={item.href}
+                  to={item.href}
                   className="ml-1 text-sm font-medium text-muted-foreground hover:text-foreground md:ml-2"
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span className="ml-1 text-sm font-medium text-foreground md:ml-2">{item.label}</span>
+                <span className="ml-1 text-sm font-medium text-foreground md:ml-2">
+                  {item.label}
+                </span>
               )}
             </div>
           </li>
         ))}
       </ol>
     </nav>
-  )
+  );
 }

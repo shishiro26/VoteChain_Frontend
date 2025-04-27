@@ -1,10 +1,15 @@
-"use client"
-
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,36 +19,42 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {toast} from "sonner"
-import { Calendar, CheckCircle, Crown, MapPin, Medal, Search } from "lucide-react"
-import { format } from "date-fns"
+} from "@/components/ui/alert-dialog";
+import {
+  Calendar,
+  CheckCircle,
+  Crown,
+  MapPin,
+  Medal,
+  Search,
+} from "lucide-react";
+import { format } from "date-fns";
 
 // Election model type
 interface Election {
-  id: string
-  title: string
-  purpose: string
-  start_date: Date
-  end_date: Date
-  state: string
-  status: number // 0 = Upcoming, 1 = Ongoing, 2 = Completed
-  total_votes: number
-  constituency_id: string
-  constituency_name: string
-  created_at: Date
-  updated_at: Date
-  result_declared: boolean
+  id: string;
+  title: string;
+  purpose: string;
+  start_date: Date;
+  end_date: Date;
+  state: string;
+  status: number; // 0 = Upcoming, 1 = Ongoing, 2 = Completed
+  total_votes: number;
+  constituency_id: string;
+  constituency_name: string;
+  created_at: Date;
+  updated_at: Date;
+  result_declared: boolean;
 }
 
 // Candidate model type
 interface Candidate {
-  id: string
-  name: string
-  party: string
-  image: string
-  election_id: string
-  votes: number
+  id: string;
+  name: string;
+  party: string;
+  image: string;
+  election_id: string;
+  votes: number;
 }
 
 // Sample completed elections
@@ -78,7 +89,7 @@ const COMPLETED_ELECTIONS: Election[] = [
     updated_at: new Date("2023-08-21"),
     result_declared: true,
   },
-]
+];
 
 // Sample candidates data
 const CANDIDATES_BY_ELECTION: Record<string, Candidate[]> = {
@@ -134,13 +145,15 @@ const CANDIDATES_BY_ELECTION: Record<string, Candidate[]> = {
       votes: 1500,
     },
   ],
-}
+};
 
 export default function DeclareResultsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedElection, setSelectedElection] = useState<Election | null>(null)
-  const [declareDialogOpen, setDeclareDialogOpen] = useState(false)
-//   const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedElection, setSelectedElection] = useState<Election | null>(
+    null
+  );
+  const [declareDialogOpen, setDeclareDialogOpen] = useState(false);
+  //   const { toast } = useToast()
 
   // Filter elections based on search term
   const filteredElections = COMPLETED_ELECTIONS.filter(
@@ -148,30 +161,34 @@ export default function DeclareResultsPage() {
       election.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       election.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
       election.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      election.constituency_name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      election.constituency_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
 
   const handleDeclareResult = (election: Election) => {
-    setSelectedElection(election)
-    setDeclareDialogOpen(true)
-  }
+    setSelectedElection(election);
+    setDeclareDialogOpen(true);
+  };
 
   const confirmDeclareResult = () => {
-    if (!selectedElection) return
+    if (!selectedElection) return;
 
     // Simulate API call to declare result
     // toast({
     //   title: "Result Declared",
     //   description: `Results for ${selectedElection.title} have been officially declared.`,
     // })
-    setDeclareDialogOpen(false)
-  }
+    setDeclareDialogOpen(false);
+  };
 
   // Helper function to find the winner candidate
   const getWinnerCandidate = (candidates: Candidate[]) => {
-    if (!candidates.length) return null
-    return candidates.reduce((prev, current) => (prev.votes > current.votes ? prev : current))
-  }
+    if (!candidates.length) return null;
+    return candidates.reduce((prev, current) =>
+      prev.votes > current.votes ? prev : current
+    );
+  };
 
   return (
     <div>
@@ -191,23 +208,32 @@ export default function DeclareResultsPage() {
 
       {filteredElections.length === 0 ? (
         <Card>
-          <CardContent className="pt-6 text-center text-muted-foreground">No completed elections found.</CardContent>
+          <CardContent className="pt-6 text-center text-muted-foreground">
+            No completed elections found.
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-8">
           {filteredElections.map((election) => {
-            const candidates = CANDIDATES_BY_ELECTION[election.id] || []
-            const winner = getWinnerCandidate(candidates)
+            const candidates = CANDIDATES_BY_ELECTION[election.id] || [];
+            const winner = getWinnerCandidate(candidates);
 
             return (
               <Card key={election.id} className="overflow-hidden">
                 <CardHeader className="bg-primary/5 border-b border-border">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl">{election.title}</CardTitle>
-                      <CardDescription className="mt-1">{election.purpose}</CardDescription>
+                      <CardTitle className="text-xl">
+                        {election.title}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {election.purpose}
+                      </CardDescription>
                     </div>
-                    <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">
+                    <Badge
+                      variant="outline"
+                      className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200"
+                    >
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Completed
                     </Badge>
@@ -220,7 +246,8 @@ export default function DeclareResultsPage() {
                         <div className="flex items-center text-sm">
                           <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                           <span>
-                            {format(election.start_date, "MMM d, yyyy")} - {format(election.end_date, "MMM d, yyyy")}
+                            {format(election.start_date, "MMM d, yyyy")} -{" "}
+                            {format(election.end_date, "MMM d, yyyy")}
                           </span>
                         </div>
                         <div className="flex items-center text-sm">
@@ -230,7 +257,10 @@ export default function DeclareResultsPage() {
                           </span>
                         </div>
                         <div className="text-sm">
-                          <span className="font-medium">{election.total_votes}</span> total votes cast
+                          <span className="font-medium">
+                            {election.total_votes}
+                          </span>{" "}
+                          total votes cast
                         </div>
                       </div>
 
@@ -254,10 +284,12 @@ export default function DeclareResultsPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Candidates & Vote Count</h3>
+                      <h3 className="text-lg font-medium mb-4">
+                        Candidates & Vote Count
+                      </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {candidates.map((candidate) => {
-                          const isWinner = winner?.id === candidate.id
+                          const isWinner = winner?.id === candidate.id;
                           return (
                             <Card
                               key={candidate.id}
@@ -269,7 +301,9 @@ export default function DeclareResultsPage() {
                                 <div className="flex items-center space-x-4">
                                   <div className="relative">
                                     <img
-                                      src={candidate.image || "/placeholder.svg"}
+                                      src={
+                                        candidate.image || "/placeholder.svg"
+                                      }
                                       alt={candidate.name}
                                       className="w-16 h-16 rounded-full object-cover border"
                                     />
@@ -280,8 +314,12 @@ export default function DeclareResultsPage() {
                                     )}
                                   </div>
                                   <div>
-                                    <h4 className="font-medium">{candidate.name}</h4>
-                                    <p className="text-sm text-muted-foreground">{candidate.party}</p>
+                                    <h4 className="font-medium">
+                                      {candidate.name}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {candidate.party}
+                                    </p>
                                     <div className="mt-1 flex items-center">
                                       <Badge
                                         variant="outline"
@@ -294,14 +332,16 @@ export default function DeclareResultsPage() {
                                         {candidate.votes} votes
                                       </Badge>
                                       {isWinner && (
-                                        <span className="ml-2 text-xs text-green-600 font-medium">Winner</span>
+                                        <span className="ml-2 text-xs text-green-600 font-medium">
+                                          Winner
+                                        </span>
                                       )}
                                     </div>
                                   </div>
                                 </div>
                               </CardContent>
                             </Card>
-                          )
+                          );
                         })}
                       </div>
                     </div>
@@ -310,13 +350,14 @@ export default function DeclareResultsPage() {
                 {!election.result_declared && (
                   <CardFooter className="border-t border-border pt-4 bg-muted/30">
                     <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Note:</span> Declaring results is final and cannot be undone. The
-                      results will be published on the blockchain for transparency.
+                      <span className="font-medium">Note:</span> Declaring
+                      results is final and cannot be undone. The results will be
+                      published on the blockchain for transparency.
                     </p>
                   </CardFooter>
                 )}
               </Card>
-            )
+            );
           })}
         </div>
       )}
@@ -327,18 +368,22 @@ export default function DeclareResultsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Declare Election Results</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to declare the results for {selectedElection?.title}? This action is final and will
-              be recorded on the blockchain.
+              Are you sure you want to declare the results for{" "}
+              {selectedElection?.title}? This action is final and will be
+              recorded on the blockchain.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeclareResult} className="bg-primary hover:bg-primary/90">
+            <AlertDialogAction
+              onClick={confirmDeclareResult}
+              className="bg-primary hover:bg-primary/90"
+            >
               <Medal className="h-4 w-4 mr-2" /> Declare Results
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
