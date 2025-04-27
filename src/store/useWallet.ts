@@ -46,6 +46,7 @@ export const useWallet = create(
 
           const account = accounts[0];
 
+          // Step 1: Login with wallet
           const loginResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
             { wallet_address: account },
@@ -53,9 +54,7 @@ export const useWallet = create(
           );
 
           if (loginResponse.status === 201) {
-            set({ wallet: account });
             const profileCompleted = loginResponse.data.profile_completed;
-            set({ is_profile_complete: profileCompleted });
 
             const decodeResponse = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
@@ -72,17 +71,6 @@ export const useWallet = create(
               email,
             } = decodeResponse.data.data;
 
-            if (
-              !first_name ||
-              !last_name ||
-              !phone_number ||
-              !status ||
-              !email
-            ) {
-              set({ is_profile_complete: false });
-              return;
-            }
-
             set({
               wallet: wallet_address,
               role,
@@ -93,9 +81,14 @@ export const useWallet = create(
                 status,
                 email,
               },
+              is_profile_complete: profileCompleted,
             });
 
-            toast.success("Wallet Connected successfully");
+            if (profileCompleted) {
+              toast.success("Wallet Connected successfully");
+            } else {
+              toast.warning("Wallet connected. Please complete your profile.");
+            }
           }
         } catch (error) {
           console.error("Wallet connect error:", error);
@@ -104,7 +97,6 @@ export const useWallet = create(
           set({ connecting: false });
         }
       },
-
       disconnectWallet: async () => {
         try {
           await axios.post(
