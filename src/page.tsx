@@ -4,7 +4,8 @@ import { Link } from "react-router";
 import { useWallet } from "./store/useWallet";
 
 export default function Home() {
-  const { wallet, connectWallet, connecting } = useWallet();
+  const { wallet, connectWallet, connecting, is_profile_complete } =
+    useWallet();
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
@@ -158,11 +159,13 @@ export default function Home() {
           {wallet ? (
             <div className="space-y-4">
               <p className="text-primary font-medium">Wallet Connected!</p>
-              <Link to="/update-profile">
-                <Button size="lg" className="gap-2">
-                  Complete Your Profile <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              {!is_profile_complete && (
+                <Link to="/update-profile">
+                  <Button size="lg" className="gap-2">
+                    Complete Your Profile <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
             </div>
           ) : (
             <Button size="lg" onClick={connectWallet} disabled={connecting}>

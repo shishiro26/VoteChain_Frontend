@@ -3,12 +3,25 @@ import { persist } from "zustand/middleware";
 import axios from "axios";
 import { toast } from "sonner";
 
+type LocationType = {
+  id: string;
+  name: string;
+};
+type Location = {
+  state: LocationType;
+  district: LocationType;
+  mandal: LocationType;
+  constituency: LocationType;
+};
+
 type Profile = {
   first_name: string;
   last_name: string;
   phone_number: string;
   status: string;
   email: string;
+  profile_image: string;
+  location: Location;
 };
 
 type WalletState = {
@@ -46,7 +59,6 @@ export const useWallet = create(
 
           const account = accounts[0];
 
-          // Step 1: Login with wallet
           const loginResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
             { wallet_address: account },
@@ -56,20 +68,26 @@ export const useWallet = create(
           if (loginResponse.status === 201) {
             const profileCompleted = loginResponse.data.profile_completed;
 
+            const user = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/v1/auth/user`,
+              { withCredentials: true }
+            );
+
             const decodeResponse = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
               { withCredentials: true }
             );
 
+            const { wallet_address, role } = decodeResponse.data;
             const {
               first_name,
               last_name,
-              wallet_address,
-              role,
               phone_number,
               status,
               email,
-            } = decodeResponse.data.data;
+              profile_image,
+              location,
+            } = user.data;
 
             set({
               wallet: wallet_address,
@@ -80,6 +98,13 @@ export const useWallet = create(
                 phone_number,
                 status,
                 email,
+                profile_image,
+                location: {
+                  state: location.state,
+                  district: location.district,
+                  mandal: location.mandal,
+                  constituency: location.constituency,
+                },
               },
               is_profile_complete: profileCompleted,
             });

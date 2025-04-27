@@ -8,12 +8,21 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, User, Mail, Phone, Clock, Shield } from "lucide-react";
+import {
+  CheckCircle,
+  User,
+  Mail,
+  Phone,
+  Shield,
+  MapPin,
+  Ban,
+  Hourglass,
+} from "lucide-react";
 import { useWallet } from "@/store/useWallet";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export default function ProfilePage() {
-  const { wallet, is_profile_complete } = useWallet();
+  const { wallet, is_profile_complete, profile } = useWallet();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,8 +102,8 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <Card className="border border-border">
-            <CardHeader className="bg-primary/5 border-b border-border">
+          <Card className="border border-border py-0">
+            <CardHeader className="bg-primary/5 border-b border-border py-5">
               <CardTitle>My Profile</CardTitle>
               <CardDescription>Your personal information</CardDescription>
             </CardHeader>
@@ -102,10 +111,28 @@ export default function ProfilePage() {
               <div className="flex justify-center mb-6">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-12 w-12 text-primary" />
+                    <img
+                      src={profile?.profile_image}
+                      alt="User Avatar"
+                      className="w-24 h-24 rounded-full object-cover"
+                    />
                   </div>
-                  <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-1 rounded-full">
-                    <CheckCircle className="h-4 w-4" />
+                  <div
+                    className={`absolute -bottom-2 -right-2  text-white p-1 rounded-full ${
+                      profile?.status === "APPROVED"
+                        ? "bg-green-500"
+                        : profile?.status === "REJECTED"
+                        ? "bg-red-500"
+                        : "bg-gray-500"
+                    }`}
+                  >
+                    {profile?.status === "APPROVED" ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : profile?.status === "REJECTED" ? (
+                      <Ban className="h-5 w-5" />
+                    ) : (
+                      <Hourglass className="h-5 w-5" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -116,7 +143,7 @@ export default function ProfilePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Full Name</p>
                     <p className="font-medium">
-                      {userData.firstName} {userData.lastName}
+                      {profile?.first_name} {profile?.last_name}
                     </p>
                   </div>
                 </div>
@@ -125,7 +152,7 @@ export default function ProfilePage() {
                   <Mail className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{userData.email}</p>
+                    <p className="font-medium">{profile?.email}</p>
                   </div>
                 </div>
 
@@ -133,7 +160,7 @@ export default function ProfilePage() {
                   <Phone className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{userData.phone}</p>
+                    <p className="font-medium">+91 {profile?.phone_number}</p>
                   </div>
                 </div>
 
@@ -143,17 +170,36 @@ export default function ProfilePage() {
                     <p className="text-sm text-muted-foreground">
                       Verification Status
                     </p>
-                    <p className="font-medium text-green-500">
-                      {userData.verificationStatus}
+
+                    <p
+                      className={`font-medium ${
+                        profile?.status === "APPROVED"
+                          ? "text-green-500"
+                          : profile?.status === "REJECTED"
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {profile?.status === "APPROVED"
+                        ? "Verified"
+                        : profile?.status === "REJECTED"
+                        ? "Not Verified"
+                        : "Pending"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-primary" />
+                  <MapPin className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Last Login</p>
-                    <p className="font-medium">{userData.lastLogin}</p>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="font-medium">
+                      {profile?.location.constituency.name},
+                      {profile?.location.mandal.name},
+                      <br />
+                      {profile?.location.district.name},
+                      {profile?.location.state.name}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -192,7 +238,11 @@ export default function ProfilePage() {
                 </div>
 
                 <Button variant="outline" size="sm">
-                  View on Etherscan
+                  <Link
+                    to={`https://etherscan.io/address/${userData.walletAddress}`}
+                  >
+                    View on Etherscan
+                  </Link>
                 </Button>
               </div>
             </CardContent>

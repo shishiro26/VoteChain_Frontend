@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLocation } from "react-router";
-import { AlertTriangle, Menu, Shield, X } from "lucide-react";
+import { AlertTriangle, Menu, Shield, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "./mode-toggle.tsx";
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useWallet } from "@/store/useWallet.ts";
 
 const Header = () => {
@@ -27,6 +27,7 @@ const Header = () => {
     connectWallet,
     disconnectWallet,
     is_profile_complete,
+    profile,
   } = useWallet();
 
   const pathname = location.pathname;
@@ -37,7 +38,7 @@ const Header = () => {
     { name: "Update Profile", to: "/update-profile" },
     { name: "Vote", to: "/vote" },
     { name: "Results", to: "/results" },
-    { name: "My Profile", to: "/profile" },
+    { name: "My Profile", to: `/profile/${wallet}` },
   ];
 
   const formatWalletAddress = (address: string) => {
@@ -89,6 +90,10 @@ const Header = () => {
                     className="relative h-8 w-8 rounded-full"
                   >
                     <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={profile?.profile_image}
+                        alt={profile?.first_name}
+                      />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {getInitials(wallet)}
                       </AvatarFallback>
@@ -102,11 +107,14 @@ const Header = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
+                    <Link to={`/profile/${wallet}`}>
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center">
+                      <Link to="/admin" className="flex items-center gap-0">
                         <Shield className="h-4 w-4" />
                         Admin Panel
                       </Link>
