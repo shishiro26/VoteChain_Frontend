@@ -1,5 +1,8 @@
 import * as z from "zod";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif"];
+
 export const update_user_schema = z.object({
   first_name: z
     .string({
@@ -36,65 +39,58 @@ export const update_user_schema = z.object({
       message: "Email must be less than 50 characters",
     }
   ),
-  state: z
-    .string()
-    .min(1, {
+  state: z.object({
+    id: z
+      .string()
+      .min(1, {
+        message: "State is required",
+      })
+      .trim()
+      .toLowerCase(),
+    name: z.string().min(1, {
       message: "State is required",
-    })
-    .trim()
-    .toLowerCase(),
-  district: z
-    .string()
-    .min(1, {
-      message: "District is required",
-    })
-    .trim()
-    .toLowerCase(),
-  mandal: z
-    .string()
-    .min(1, {
-      message: "Mandal is required",
-    })
-    .trim()
-    .toLowerCase(),
-  constituency: z
-    .string()
-    .min(1, {
-      message: "Constituency is required",
-    })
-    .trim()
-    .toLowerCase(),
-});
-
-export const formSchema = z.object({
-  firstName: z.string().min(2, {
-    message: "First name must be at least 2 characters.",
-  }),
-  lastName: z.string().min(2, {
-    message: "Last name must be at least 2 characters.",
-  }),
-  phone: z
-    .string()
-    .min(10, {
-      message: "Phone number must be at least 10 digits.",
-    })
-    .regex(/^\d+$/, {
-      message: "Phone number must contain only digits.",
     }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
   }),
-  state: z.string({
-    required_error: "Please select a state.",
+  district: z.object({
+    id: z
+      .string()
+      .min(1, {
+        message: "District is required",
+      })
+      .trim()
+      .toLowerCase(),
+    name: z.string().min(1, {
+      message: "District is required",
+    }),
   }),
-  mandal: z.string({
-    required_error: "Please select a mandal.",
+  mandal: z.object({
+    id: z
+      .string()
+      .min(1, {
+        message: "Mandal is required",
+      })
+      .trim()
+      .toLowerCase(),
+    name: z.string().min(1, {
+      message: "Mandal is required",
+    }),
   }),
-  district: z.string({
-    required_error: "Please select a district.",
+  constituency: z.object({
+    id: z
+      .string()
+      .min(1, {
+        message: "Constituency is required",
+      })
+      .trim()
+      .toLowerCase(),
+    name: z.string().min(1, {
+      message: "Constituency is required",
+    }),
   }),
-  constituency: z.string({
-    required_error: "Please select a constituency.",
-  }),
-  image: z.instanceof(File).optional().or(z.literal(undefined)),
+  profile_image: z
+    .any()
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
+      message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
+    }),
 });

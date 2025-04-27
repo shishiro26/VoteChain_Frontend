@@ -15,7 +15,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<string>(
-    localStorage.getItem("vite-ui-theme") || "dark"
+    localStorage.getItem("vite-ui-theme") || "light"
   );
 
   useEffect(() => {

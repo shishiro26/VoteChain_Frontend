@@ -8,9 +8,6 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const is_admin = role === "ADMIN";
 
-  console.log("is_admin", is_admin);
-  console.log("role", role);
-
   React.useEffect(() => {
     if (!is_admin || !wallet) {
       navigate("/");

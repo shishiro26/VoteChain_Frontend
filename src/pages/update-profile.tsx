@@ -1,9 +1,7 @@
+import * as z from "zod";
 import React from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AlertTriangle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader } from "@/components/shared/loader";
+import { Loader } from "@/components/shared/loaders/loader";
 import {
   Select,
   SelectContent,
@@ -33,233 +31,74 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWallet } from "@/store/useWallet";
-import { formSchema } from "@/validations";
-import { useLocationStore } from "@/store/useLocation";
-
-const INDIAN_STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
-];
-
-const DISTRICTS_BY_STATE: Record<string, string[]> = {
-  "Andhra Pradesh": [
-    "Anantapur",
-    "Chittoor",
-    "East Godavari",
-    "Guntur",
-    "Krishna",
-    "Kurnool",
-    "Prakasam",
-    "Srikakulam",
-    "Visakhapatnam",
-    "Vizianagaram",
-    "West Godavari",
-    "YSR Kadapa",
-  ],
-  Delhi: [
-    "Central Delhi",
-    "East Delhi",
-    "New Delhi",
-    "North Delhi",
-    "North East Delhi",
-    "North West Delhi",
-    "Shahdara",
-    "South Delhi",
-    "South East Delhi",
-    "South West Delhi",
-    "West Delhi",
-  ],
-  Maharashtra: [
-    "Ahmednagar",
-    "Akola",
-    "Amravati",
-    "Aurangabad",
-    "Beed",
-    "Bhandara",
-    "Buldhana",
-    "Chandrapur",
-    "Dhule",
-    "Gadchiroli",
-    "Gondia",
-    "Hingoli",
-    "Jalgaon",
-    "Jalna",
-    "Kolhapur",
-    "Latur",
-    "Mumbai City",
-    "Mumbai Suburban",
-    "Nagpur",
-    "Nanded",
-    "Nandurbar",
-    "Nashik",
-    "Osmanabad",
-    "Palghar",
-    "Parbhani",
-    "Pune",
-    "Raigad",
-    "Ratnagiri",
-    "Sangli",
-    "Satara",
-    "Sindhudurg",
-    "Solapur",
-    "Thane",
-    "Wardha",
-    "Washim",
-    "Yavatmal",
-  ],
-  // Add more states and districts as needed
-};
-
-// Sample constituencies by district (simplified for demo)
-const CONSTITUENCIES_BY_DISTRICT: Record<string, string[]> = {
-  "Mumbai City": [
-    "Colaba",
-    "Mumbadevi",
-    "Worli",
-    "Byculla",
-    "Malabar Hill",
-    "Mahim",
-  ],
-  Pune: [
-    "Pune Cantonment",
-    "Kasba Peth",
-    "Kothrud",
-    "Parvati",
-    "Hadapsar",
-    "Shivajinagar",
-  ],
-  "Central Delhi": ["Chandni Chowk", "Matia Mahal", "Ballimaran", "Karol Bagh"],
-};
+import { update_user_schema } from "@/validations";
+import { toast } from "sonner";
+import {
+  useConstituenciesQuery,
+  useDistrictsQuery,
+  useMandalsQuery,
+  useStatesQuery,
+  useUpdateProfileMutation,
+} from "@/hooks/use-location";
+import { useNavigate } from "react-router";
+import { DropdownLoader } from "@/components/shared/loaders/dropdown-loader";
 
 export default function UpdateProfile() {
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
-  const [availableConstituencies, setAvailableConstituencies] = useState<
-    string[]
-  >([]);
-  const { wallet, setIsProfileComplete } = useWallet();
-  const { states, fetchStates } = useLocationStore();
-  console.log("States", states);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const { wallet } = useWallet();
   const navigate = useNavigate();
+  const { mutate: updateProfile, isPending } = useUpdateProfileMutation();
 
-  React.useEffect(() => {
-    fetchStates();
-  }, [fetchStates]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof update_user_schema>>({
+    resolver: zodResolver(update_user_schema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      phone: "",
+      first_name: "",
+      last_name: "",
+      phone_number: "",
       email: "",
-      state: "",
-      mandal: "",
-      district: "",
-      constituency: "",
+      state: { id: "", name: "" },
+      district: { id: "", name: "" },
+      mandal: { id: "", name: "" },
+      constituency: { id: "", name: "" },
+      profile_image: null,
     },
   });
 
   const selectedState = form.watch("state");
   const selectedDistrict = form.watch("district");
+  const selectedMandal = form.watch("mandal");
 
-  React.useEffect(() => {
-    if (selectedState) {
-      const districts = DISTRICTS_BY_STATE[selectedState] || [];
-      setAvailableDistricts(districts);
+  const { data: states, isLoading: statesLoader } = useStatesQuery();
+  const { data: districts, isLoading: districtLoader } = useDistrictsQuery(
+    selectedState.id
+  );
+  const { data: mandals, isLoading: mandalLoader } = useMandalsQuery(
+    selectedDistrict.id
+  );
+  const { data: constituencies, isLoading: constituencyLoader } =
+    useConstituenciesQuery(selectedMandal.id);
 
-      // Reset district and constituency when state changes
-      form.setValue("district", "");
-      form.setValue("constituency", "");
-      setAvailableConstituencies([]);
-    }
-  }, [selectedState, form]);
-
-  React.useEffect(() => {
-    if (selectedDistrict) {
-      const constituencies = CONSTITUENCIES_BY_DISTRICT[selectedDistrict] || [];
-      setAvailableConstituencies(constituencies);
-
-      // Reset constituency when district changes
-      form.setValue("constituency", "");
-    }
-  }, [selectedDistrict, form]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof update_user_schema>) => {
     if (!wallet) {
-      console.log("values", values);
-      //   toast({
-      //     title: "Wallet not connected",
-      //     description: "Please connect your MetaMask wallet first",
-      //     variant: "destructive",
-      //   });
+      toast.message("Wallet not connected", {
+        description: "Please connect your MetaMask wallet first",
+      });
       return;
     }
-
-    setIsVerifying(true);
-
-    // Simulate verification process
-    setTimeout(() => {
-      setIsVerifying(false);
-      setIsProfileComplete(true);
-
-      //   toast.desc({
-      //     title: "Profile Updated",
-      //     description: "Your profile has been verified successfully",
-      //   });
-
-      //   router.push("/vote");
-      //   location.
-    }, 3000);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue("image", file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(values)) {
+      if (
+        key === "state" ||
+        key === "district" ||
+        key === "mandal" ||
+        key === "constituency"
+      ) {
+        formData.append(`${key}_id`, value.id);
+      } else {
+        formData.append(key, value);
+      }
     }
+    updateProfile(formData);
   };
 
   if (!wallet) {
@@ -301,7 +140,7 @@ export default function UpdateProfile() {
             </AlertDescription>
           </Alert>
 
-          {isVerifying ? (
+          {isPending ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader size="lg" text="Verifying your information..." />
               <p className="mt-4 text-center text-muted-foreground">
@@ -318,7 +157,7 @@ export default function UpdateProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="firstName"
+                    name="first_name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground">
@@ -337,7 +176,7 @@ export default function UpdateProfile() {
                   />
                   <FormField
                     control={form.control}
-                    name="lastName"
+                    name="last_name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground">
@@ -359,7 +198,7 @@ export default function UpdateProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="phone_number"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground">
@@ -395,32 +234,12 @@ export default function UpdateProfile() {
                   />
                 </div>
 
-                {/* Location Details */}
                 <div className="pt-2 border-t">
                   <h3 className="text-lg font-medium mb-4">
                     Voting Location Details
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="mandal"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">
-                            Pincode
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="400001"
-                              {...field}
-                              className="bg-background"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <FormField
                       control={form.control}
                       name="state"
@@ -430,8 +249,13 @@ export default function UpdateProfile() {
                             State
                           </FormLabel>
                           <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            onValueChange={(value) => {
+                              const selected = states.find(
+                                (state: { id: string }) => state.id === value
+                              );
+                              field.onChange(selected);
+                            }}
+                            value={field.value.id}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -439,11 +263,70 @@ export default function UpdateProfile() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {states.map((state) => (
-                                <SelectItem key={state.name} value={state.name}>
-                                  {state.name}
-                                </SelectItem>
-                              ))}
+                              {statesLoader ? (
+                                <DropdownLoader count={5} />
+                              ) : Array.isArray(states) && states.length > 0 ? (
+                                states.map((state) => (
+                                  <SelectItem key={state.id} value={state.id}>
+                                    {state.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="text-center p-2 text-sm text-muted-foreground">
+                                  No states available
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="district"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">
+                            State
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              const selected = districts.find(
+                                (district: { id: string }) =>
+                                  district.id === value
+                              );
+                              field.onChange(selected);
+                            }}
+                            defaultValue={field.value.name}
+                            disabled={!selectedState}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a district" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {districtLoader ? (
+                                <DropdownLoader count={5} />
+                              ) : Array.isArray(districts) &&
+                                districts.length > 0 ? (
+                                districts.map(
+                                  (district: { id: string; name: string }) => (
+                                    <SelectItem
+                                      key={district.id}
+                                      value={district.id}
+                                    >
+                                      {district.name}
+                                    </SelectItem>
+                                  )
+                                )
+                              ) : (
+                                <div className="text-center p-2 text-sm text-muted-foreground">
+                                  No districts available
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -455,28 +338,47 @@ export default function UpdateProfile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <FormField
                       control={form.control}
-                      name="district"
+                      name="mandal"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-foreground">
-                            District
+                            Mandal
                           </FormLabel>
                           <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={!selectedState}
+                            onValueChange={(value) => {
+                              const selected = mandals.find(
+                                (mandal: { id: string }) => mandal.id === value
+                              );
+                              field.onChange(selected);
+                            }}
+                            defaultValue={field.value.name}
+                            disabled={!selectedDistrict}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a district" />
+                                <SelectValue placeholder="Select a mandal" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {availableDistricts.map((district) => (
-                                <SelectItem key={district} value={district}>
-                                  {district}
-                                </SelectItem>
-                              ))}
+                              {mandalLoader ? (
+                                <DropdownLoader count={5} />
+                              ) : Array.isArray(mandals) &&
+                                mandals.length > 0 ? (
+                                mandals.map(
+                                  (mandal: { id: string; name: string }) => (
+                                    <SelectItem
+                                      key={mandal.id}
+                                      value={mandal.id}
+                                    >
+                                      {mandal.name}
+                                    </SelectItem>
+                                  )
+                                )
+                              ) : (
+                                <div className="text-center p-2 text-sm text-muted-foreground">
+                                  No mandals available
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -492,9 +394,15 @@ export default function UpdateProfile() {
                             Constituency
                           </FormLabel>
                           <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={!selectedDistrict}
+                            onValueChange={(value) => {
+                              const selected = constituencies.find(
+                                (constituency: { id: string }) =>
+                                  constituency.id === value
+                              );
+                              field.onChange(selected);
+                            }}
+                            defaultValue={field.value.name}
+                            disabled={!selectedMandal}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -502,14 +410,28 @@ export default function UpdateProfile() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {availableConstituencies.map((constituency) => (
-                                <SelectItem
-                                  key={constituency}
-                                  value={constituency}
-                                >
-                                  {constituency}
-                                </SelectItem>
-                              ))}
+                              {constituencyLoader ? (
+                                <DropdownLoader count={5} />
+                              ) : Array.isArray(constituencies) &&
+                                constituencies.length > 0 ? (
+                                constituencies.map(
+                                  (constituency: {
+                                    id: string;
+                                    name: string;
+                                  }) => (
+                                    <SelectItem
+                                      key={constituency.id}
+                                      value={constituency.id}
+                                    >
+                                      {constituency.name}
+                                    </SelectItem>
+                                  )
+                                )
+                              ) : (
+                                <div className="text-center p-2 text-sm text-muted-foreground">
+                                  No constituencies available
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -521,23 +443,23 @@ export default function UpdateProfile() {
 
                 <FormField
                   control={form.control}
-                  name="image"
-                  render={({ field: { value, onChange, ...fieldProps } }) => (
+                  name="profile_image"
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-foreground">
                         Upload Image (for face verification)
                       </FormLabel>
                       <FormControl>
                         <div className="flex flex-col items-center">
-                          {imagePreview ? (
+                          {imagePreview && (
                             <div className="mb-4">
                               <img
-                                src={imagePreview || "/placeholder.svg"}
+                                src={imagePreview}
                                 alt="Preview"
                                 className="w-32 h-32 object-cover rounded-full border"
                               />
                             </div>
-                          ) : null}
+                          )}
                           <div className="flex items-center justify-center w-full">
                             <label
                               htmlFor="image-upload"
@@ -563,9 +485,7 @@ export default function UpdateProfile() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    onChange(file);
-
-                                    // Create preview
+                                    field.onChange(file);
                                     const reader = new FileReader();
                                     reader.onloadend = () => {
                                       setImagePreview(reader.result as string);
@@ -573,7 +493,6 @@ export default function UpdateProfile() {
                                     reader.readAsDataURL(file);
                                   }
                                 }}
-                                {...fieldProps}
                               />
                             </label>
                           </div>

@@ -45,7 +45,6 @@ export const useWallet = create(
           });
 
           const account = accounts[0];
-          set({ wallet: account });
 
           const loginResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
@@ -54,6 +53,7 @@ export const useWallet = create(
           );
 
           if (loginResponse.status === 201) {
+            set({ wallet: account });
             const profileCompleted = loginResponse.data.profile_completed;
             set({ is_profile_complete: profileCompleted });
 
@@ -83,10 +83,6 @@ export const useWallet = create(
               return;
             }
 
-            console.log(
-              "FirstName,lastName,phoneNumber,status,email",
-              decodeResponse.data.data
-            );
             set({
               wallet: wallet_address,
               role,
