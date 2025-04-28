@@ -79,6 +79,7 @@ export const useWallet = create(
             );
 
             const { wallet_address, role } = decodeResponse.data;
+            console.log("role,", role);
             const {
               first_name,
               last_name,

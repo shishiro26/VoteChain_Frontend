@@ -22,8 +22,10 @@ import { useWallet } from "@/store/useWallet";
 import { Link, useNavigate } from "react-router";
 
 export default function ProfilePage() {
-  const { wallet, is_profile_complete, profile } = useWallet();
+  const { wallet, is_profile_complete, profile, role } = useWallet();
   const navigate = useNavigate();
+
+  console.log("profile", role);
 
   useEffect(() => {
     if (!wallet) {
@@ -102,7 +104,7 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <Card className="border border-border py-0">
+          <Card className="border border-border pt-0">
             <CardHeader className="bg-primary/5 border-b border-border py-5">
               <CardTitle>My Profile</CardTitle>
               <CardDescription>Your personal information</CardDescription>

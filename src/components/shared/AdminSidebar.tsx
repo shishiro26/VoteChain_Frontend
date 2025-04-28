@@ -45,7 +45,11 @@ const AdminSidebar = () => {
       href: "/admin/create-election",
       icon: CalendarPlus,
     },
-    { name: "Approve Users", href: "/admin/approve-users", icon: UserCheck },
+    {
+      name: "Approve Users",
+      href: "/admin/approve-users?status=pending&page=1",
+      icon: UserCheck,
+    },
     { name: "Add Candidates", href: "/admin/add-candidates", icon: Users },
     { name: "Declare Results", href: "/admin/declare-results", icon: Medal },
   ];
@@ -53,7 +57,8 @@ const AdminSidebar = () => {
   const return_title = (pathname: string) => {
     if (pathname === "/admin") return "Dashboard";
     if (pathname === "/admin/create-election") return "Create Election";
-    if (pathname === "/admin/approve-users") return "Approve Users";
+    if (pathname === "/admin/approve-users?status=pending&page=1")
+      return "Approve Users";
     if (pathname === "/admin/add-candidates") return "Add Candidates";
     if (pathname === "/admin/declare-results") return "Declare Results";
     return "";
