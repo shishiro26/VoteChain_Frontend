@@ -93,4 +93,10 @@ export const update_user_schema = z.object({
     .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
       message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
     }),
+  aadhar_image: z
+    .any()
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
+      message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
+    }),
 });

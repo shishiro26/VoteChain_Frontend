@@ -15,17 +15,15 @@ import {
   Phone,
   Shield,
   MapPin,
-  Ban,
-  Hourglass,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import { useWallet } from "@/store/useWallet";
 import { Link, useNavigate } from "react-router";
 
 export default function ProfilePage() {
-  const { wallet, is_profile_complete, profile, role } = useWallet();
+  const { wallet, is_profile_complete, profile } = useWallet();
   const navigate = useNavigate();
-
-  console.log("profile", role);
 
   useEffect(() => {
     if (!wallet) {
@@ -120,20 +118,20 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div
-                    className={`absolute -bottom-2 -right-2  text-white p-1 rounded-full ${
+                    className={`absolute -bottom-2 -right-2 ${
                       profile?.status === "APPROVED"
                         ? "bg-green-500"
                         : profile?.status === "REJECTED"
-                        ? "bg-red-500"
-                        : "bg-gray-500"
-                    }`}
+                        ? "bg-destructive"
+                        : "bg-amber-500"
+                    } text-white p-1 rounded-full`}
                   >
                     {profile?.status === "APPROVED" ? (
-                      <CheckCircle className="h-5 w-5" />
+                      <CheckCircle className="h-4 w-4" />
                     ) : profile?.status === "REJECTED" ? (
-                      <Ban className="h-5 w-5" />
+                      <AlertCircle className="h-4 w-4" />
                     ) : (
-                      <Hourglass className="h-5 w-5" />
+                      <Clock className="h-4 w-4" />
                     )}
                   </div>
                 </div>
@@ -172,21 +170,20 @@ export default function ProfilePage() {
                     <p className="text-sm text-muted-foreground">
                       Verification Status
                     </p>
-
                     <p
                       className={`font-medium ${
                         profile?.status === "APPROVED"
                           ? "text-green-500"
                           : profile?.status === "REJECTED"
-                          ? "text-red-500"
-                          : "text-gray-500"
+                          ? "text-destructive"
+                          : "text-amber-500"
                       }`}
                     >
                       {profile?.status === "APPROVED"
                         ? "Verified"
                         : profile?.status === "REJECTED"
-                        ? "Not Verified"
-                        : "Pending"}
+                        ? "Rejected"
+                        : "Pending Verification"}
                     </p>
                   </div>
                 </div>

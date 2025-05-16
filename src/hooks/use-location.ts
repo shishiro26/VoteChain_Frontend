@@ -10,7 +10,7 @@ export const useStatesQuery = () => {
     queryKey: ["states"],
     queryFn: async () => {
       const res = await axios.get(`${API}/api/v1/location/states`);
-      return res.data;
+      return res.data.data;
     },
     staleTime: 1000 * 60 * 60,
     retry: 1,
@@ -24,7 +24,7 @@ export const useDistrictsQuery = (state_id: string) => {
       const res = await axios.get(
         `${API}/api/v1/location/districts/${state_id}`
       );
-      return res.data;
+      return res.data.data;
     },
     enabled: state_id !== "",
     staleTime: 1000 * 60 * 60,
@@ -39,7 +39,7 @@ export const useMandalsQuery = (district_id: string) => {
       const res = await axios.get(
         `${API}/api/v1/location/mandals/${district_id}`
       );
-      return res.data;
+      return res.data.data;
     },
     enabled: district_id !== "",
     staleTime: 1000 * 60 * 60,
@@ -54,7 +54,7 @@ export const useConstituenciesQuery = (mandal_id: string) => {
       const res = await axios.get(
         `${API}/api/v1/location/constituencies/${mandal_id}`
       );
-      return res.data;
+      return res.data.data;
     },
     enabled: mandal_id !== "",
     staleTime: 1000 * 60 * 60,

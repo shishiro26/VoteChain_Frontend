@@ -23,10 +23,17 @@ import {
   X,
   Eye,
 } from "lucide-react";
-import { usePendingUsers } from "@/hooks/use-admin";
+import {
+  useApproveUserMutation,
+  usePendingUsers,
+  useRejectUserMutation,
+} from "@/hooks/use-admin";
 import { Loader } from "@/components/ui/loader";
 import { useSearchParams } from "react-router";
 import { Dialog, DialogTitle, DialogContent } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useGenericMutation } from "@/hooks/useGenericMutation";
+import { toast } from "sonner";
 
 type Location = {
   state_name: string;
@@ -36,6 +43,7 @@ type Location = {
 };
 
 type User = {
+  id: string;
   wallet_address: string;
   status: "pending" | "approved" | "rejected";
   first_name: string;
@@ -62,7 +70,7 @@ export default function ApproveUsersPage() {
     url: string;
     title: string;
   } | null>(null);
-
+  const [rejectedReason, setRejectedReason] = useState<string>("");
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") || "pending";
   const page = searchParams.get("page") || "1";
@@ -74,6 +82,9 @@ export default function ApproveUsersPage() {
     sortBy: "created_at:desc",
     populate: "UserDetails,UserLocation",
   });
+
+  const approve_user = useApproveUserMutation();
+  const reject_user = useRejectUserMutation();
 
   const filterUsers = (users: User[]) => {
     return users.filter(
@@ -99,14 +110,46 @@ export default function ApproveUsersPage() {
   };
 
   const confirmApprove = () => {
-    setApproveDialogOpen(false);
+    approve_user.mutate(
+      {
+        userId: selectedUser.id,
+      },
+      {
+        onSuccess: () => {
+          setTimeout(() => {
+            setApproveDialogOpen(false);
+          }, 10000);
+        },
+        onError: (error) => {
+          console.error("error", error);
+          toast.error("Error while approving user");
+        },
+      }
+    );
   };
 
   const confirmReject = () => {
-    setRejectDialogOpen(false);
+    console.log("I am in this");
+    reject_user.mutate(
+      {
+        userId: selectedUser.id,
+        reason: rejectedReason,
+      },
+      {
+        onSuccess: () => {
+          toast.success("User rejected successfully");
+          setTimeout(() => {
+            setRejectDialogOpen(false);
+          }, 10000);
+        },
+        onError: (error) => {
+          console.error("error", error);
+          toast.error("Error while rejecting user");
+        },
+      }
+    );
   };
 
-  // Directly update the URL when the tab changes
   const handleTabChange = (newTab: string) => {
     setSearchParams({ status: newTab, page: "1" });
   };
@@ -218,25 +261,26 @@ export default function ApproveUsersPage() {
                             </p>
                           </div>
                         </div>
-
-                        <div className="flex gap-2 mt-4 md:mt-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-green-500 text-green-600 hover:bg-green-50"
-                            onClick={() => handleApprove(user)}
-                          >
-                            <ThumbsUp className="h-4 w-4 mr-1" /> Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-red-500 text-red-600 hover:bg-red-50"
-                            onClick={() => handleReject(user)}
-                          >
-                            <ThumbsDown className="h-4 w-4 mr-1" /> Reject
-                          </Button>
-                        </div>
+                        {status === "pending" && (
+                          <div className="flex gap-2 mt-4 md:mt-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-green-500 text-green-600 hover:bg-green-50"
+                              onClick={() => handleApprove(user)}
+                            >
+                              <ThumbsUp className="h-4 w-4 mr-1" /> Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={() => handleReject(user)}
+                            >
+                              <ThumbsDown className="h-4 w-4 mr-1" /> Reject
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -259,12 +303,15 @@ export default function ApproveUsersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={approve_user.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmApprove}
               className="bg-green-600 hover:bg-green-700"
+              disabled={approve_user.isPending}
             >
-              <Shield className="h-4 w-4 mr-2" /> Approve
+              <Shield className="h-4 w-4 mr-0" /> Approve
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -275,18 +322,29 @@ export default function ApproveUsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reject User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reject {selectedUser?.first_name}{" "}
-              {selectedUser?.last_name}? They will not be able to participate in
-              elections.
+              Please provide a reason for rejecting {selectedUser?.first_name}{" "}
+              {selectedUser?.last_name}. This will be shared with the user so
+              they can address the issues and reapply.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="p-1 pt-0">
+            <Textarea
+              placeholder="Enter reason for rejection..."
+              value={rejectedReason}
+              onChange={(e) => setRejectedReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={reject_user.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmReject}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-500 hover:bg-red-700"
+              disabled={reject_user.isPending}
             >
-              <X className="h-4 w-4 mr-2" /> Reject
+              <X className="h-4 w-4" /> Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

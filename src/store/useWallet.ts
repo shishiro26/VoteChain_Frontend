@@ -65,52 +65,26 @@ export const useWallet = create(
             { withCredentials: true }
           );
 
-          if (loginResponse.status === 201) {
-            const profileCompleted = loginResponse.data.profile_completed;
+          console.log("Login Response:", loginResponse);
+          console.log("Status", loginResponse.status);
 
-            const user = await axios.get(
-              `${import.meta.env.VITE_API_URL}/api/v1/auth/user`,
-              { withCredentials: true }
-            );
-
+          if (loginResponse.status === 200) {
+            console.group();
+            const { profile_completed } = loginResponse.data.data;
             const decodeResponse = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
               { withCredentials: true }
             );
 
-            const { wallet_address, role } = decodeResponse.data;
-            console.log("role,", role);
-            const {
-              first_name,
-              last_name,
-              phone_number,
-              status,
-              email,
-              profile_image,
-              location,
-            } = user.data;
+            const { wallet_address, role } = decodeResponse.data.data;
 
             set({
               wallet: wallet_address,
               role,
-              profile: {
-                first_name,
-                last_name,
-                phone_number,
-                status,
-                email,
-                profile_image,
-                location: {
-                  state: location.state,
-                  district: location.district,
-                  mandal: location.mandal,
-                  constituency: location.constituency,
-                },
-              },
-              is_profile_complete: profileCompleted,
+              is_profile_complete: profile_completed,
             });
 
-            if (profileCompleted) {
+            if (profile_completed) {
               toast.success("Wallet Connected successfully");
             } else {
               toast.warning("Wallet connected. Please complete your profile.");

@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useLocation } from "react-router";
-import { AlertTriangle, Menu, Shield, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "./mode-toggle";
 import { cn } from "@/lib/utils";
-import { ModeToggle } from "./mode-toggle.tsx";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  User,
+  LogOut,
+  Vote,
+  BarChart3,
+  Flag,
+  ShieldCheck,
+  AlertTriangle,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,198 +22,221 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useWallet } from "@/store/useWallet.ts";
+import { useWallet } from "@/store/useWallet";
+import { useAuth } from "@/hooks/use-auth";
+import { Link, useLocation, useNavigate } from "react-router";
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+export default function Header() {
   const {
-    role,
     wallet,
     connecting,
     connectWallet,
     disconnectWallet,
     is_profile_complete,
-    profile,
   } = useWallet();
+  const { checkIsAdmin: isAdmin } = useAuth();
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const pathname = location.pathname;
-  const isAdmin = role === "admin";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: "Home", to: "/" },
-    { name: "Update Profile", to: "/update-profile" },
-    { name: "Vote", to: "/vote" },
-    { name: "Results", to: "/results" },
-    { name: "My Profile", to: `/profile/${wallet}` },
+    { name: "Home", href: "/" },
+    { name: "Vote", href: "/vote" },
+    { name: "Results", href: "/results" },
+    { name: "Parties", href: "/parties" },
   ];
 
-  const formatWalletAddress = (address: string) => {
-    return `${address.substring(0, 6)}...${address.substring(
-      address.length - 4
-    )}`;
-  };
-
-  const getInitials = (address: string) => {
-    return address.substring(2, 4).toUpperCase();
+  const truncateAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
-    <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-primary">VoteChain</span>
+    <header className="bg-background border-b border-border sticky top-0 z-40">
+      <nav className="container mx-auto px-4 flex items-center justify-between h-16">
+        {/* Logo */}
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center">
+            <Vote className="h-6 w-6 text-primary mr-2" />
+            <span className="text-xl font-bold">VoteChain</span>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex md:items-center md:space-x-6">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                pathname === item.href
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              {item.name}
             </Link>
-          </div>
+          ))}
+        </div>
 
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigation.map((item) =>
-              is_profile_complete && item.name === "Update Profile" ? null : (
-                <Link
-                  key={item.name}
-                  to={item.to}
-                  className={cn(
-                    "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                    pathname === item.to
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground/60 hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              )
-            )}
-          </nav>
+        {/* Right side actions */}
+        <div className="flex items-center space-x-4">
+          {/* Admin Dashboard Link (if admin) */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="hidden md:flex items-center text-sm font-medium text-primary"
+            >
+              <ShieldCheck className="h-4 w-4 mr-1" />
+              Admin
+            </Link>
+          )}
 
-          <div className="hidden md:flex items-center space-x-4">
-            <ModeToggle />
-            {wallet ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={profile?.profile_image}
-                        alt={profile?.first_name}
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(wallet)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuLabel className="font-mono text-xs">
-                    {formatWalletAddress(wallet)}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+          {/* Wallet Connection */}
+          {wallet ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="hidden md:flex">
+                  <User className="h-4 w-4 mr-2" />
+                  {truncateAddress(wallet)}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to={`/profile/${wallet}`}>
-                      <User className="h-4 w-4" />
-                      Profile
+                    <Link to="/admin" className="cursor-pointer">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Admin Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-0">
-                        <Shield className="h-4 w-4" />
-                        Admin Panel
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={disconnectWallet}>
-                    Disconnect
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button onClick={connectWallet} disabled={connecting}>
-                {connecting ? "Connecting..." : "Connect MetaMask"}
-              </Button>
-            )}
-          </div>
-
-          <div className="flex md:hidden items-center space-x-2">
-            <ModeToggle />
+                )}
+                <DropdownMenuItem asChild>
+                  <Link to="/parties" className="cursor-pointer">
+                    <Flag className="h-4 w-4 mr-2" />
+                    Parties
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={disconnectWallet}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Disconnect
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
+              onClick={connectWallet}
+              disabled={connecting}
+              className="hidden md:flex"
             >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {connecting ? "Connecting..." : "Connect Wallet"}
             </Button>
-          </div>
-        </div>
-      </div>
+          )}
 
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 border-t">
-            {navigation.map((item) =>
-              is_profile_complete && item.name === "Update Profile" ? null : (
+          {/* Theme Toggle */}
+          <ModeToggle />
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
+      </nav>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-background border-t border-border">
+          <div className="container mx-auto px-4 py-4 space-y-4">
+            {/* Navigation links */}
+            <div className="flex flex-col space-y-3">
+              {navigation.map((item) => (
                 <Link
                   key={item.name}
-                  to={item.to}
+                  to={item.href}
                   className={cn(
-                    "block px-3 py-2 rounded-md text-base font-medium",
-                    pathname === item.to
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground/60 hover:text-foreground hover:bg-accent"
+                    "text-sm font-medium py-2 transition-colors",
+                    pathname === item.href
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
-              )
-            )}
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground/60 hover:text-foreground hover:bg-accent"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Shield className="mr-2 h-4 w-4" />
-                Admin Panel
-              </Link>
-            )}
-            {wallet ? (
-              <div className="px-3 py-2">
-                <div className="mb-2 text-sm font-medium text-foreground/70">
-                  {formatWalletAddress(wallet)}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={disconnectWallet}
-                  className="w-full"
+              ))}
+
+              {/* Admin link if admin */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="text-sm font-medium py-2 text-primary flex items-center"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Disconnect
-                </Button>
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Admin Dashboard
+                </Link>
+              )}
+            </div>
+
+            {/* Wallet connection */}
+            {wallet ? (
+              <div className="space-y-3">
+                <div className="flex items-center text-sm font-medium">
+                  <User className="h-4 w-4 mr-2" />
+                  {truncateAddress(wallet)}
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <Link
+                    to="/profile"
+                    className="text-sm py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="justify-start text-destructive hover:text-destructive px-0"
+                    onClick={() => {
+                      disconnectWallet();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Disconnect
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="px-3 py-2">
-                <Button
-                  onClick={connectWallet}
-                  disabled={connecting}
-                  className="w-full"
-                >
-                  {connecting ? "Connecting..." : "Connect MetaMask"}
-                </Button>
-              </div>
+              <Button
+                onClick={connectWallet}
+                disabled={connecting}
+                className="w-full"
+              >
+                {connecting ? "Connecting..." : "Connect Wallet"}
+              </Button>
             )}
           </div>
         </div>
@@ -231,6 +263,4 @@ const Header = () => {
       )}
     </header>
   );
-};
-
-export default Header;
+}

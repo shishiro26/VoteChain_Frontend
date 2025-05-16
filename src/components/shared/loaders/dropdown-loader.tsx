@@ -1,17 +1,10 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
-interface DropdownLoaderProps {
-  count?: number;
-  className?: string;
-}
-
-export function DropdownLoader({ count = 5, className }: DropdownLoaderProps) {
+export function DropdownLoader() {
   return (
-    <div className={cn("flex flex-col gap-2 p-1", className)}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Skeleton key={i} className=" h-6 w-full rounded-md" />
-      ))}
+    <div className="flex items-center justify-between w-full">
+      <span className="text-muted-foreground">Loading...</span>
+      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     </div>
   );
 }

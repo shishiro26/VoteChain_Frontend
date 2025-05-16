@@ -4,7 +4,6 @@ import Layout from "@/layout/Layout.tsx";
 import AdminLayout from "@/layout/AdminLayout.tsx";
 import UpdateProfile from "@/pages/update-profile.tsx";
 import ApproveUsersPage from "@/pages/approve-users.tsx";
-import { useWallet } from "@/store/useWallet.ts";
 import ProfilePage from "@/pages/profile.tsx";
 import NotFound from "@/components/shared/not-found.tsx";
 import DeclareResultsPage from "@/pages/declare-results.tsx";
@@ -15,6 +14,7 @@ import CreateConstituencyElectionPage from "@/pages/create-elections/constituenc
 import ElectionDetailPage from "@/pages/vote/[electionid].tsx";
 import ResultsPage from "@/pages/results.tsx";
 import VotePage from "@/pages/vote/page.tsx";
+import { useWallet } from "./store/useWallet.ts";
 
 function App() {
   const { is_profile_complete } = useWallet();
@@ -43,7 +43,6 @@ function App() {
             path="constituency"
             element={<CreateConstituencyElectionPage />}
           />
-          {/* <Route path */}
         </Route>
         <Route path="*" element={<NotFound />} />
       </Route>
