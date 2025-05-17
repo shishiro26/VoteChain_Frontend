@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
-import { useLocation } from "react-router";
 import {
   BarChart3,
   CalendarPlus,
@@ -10,32 +8,43 @@ import {
   Medal,
   UserCheck,
   Users,
+  Flag,
+  LogOut,
+  Settings,
+  HelpCircle,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Link, useLocation } from "react-router";
+import { useWallet } from "@/store/useWallet";
 
-const AdminSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+interface AdminSidebarProps {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+const AdminSidebar = ({ isOpen, toggleSidebar }: AdminSidebarProps) => {
   const location = useLocation();
   const pathname = location.pathname;
+  const { disconnectWallet } = useWallet();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setCollapsed(true);
-      }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
 
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const navigation = [
@@ -45,108 +54,176 @@ const AdminSidebar = () => {
       href: "/admin/create-election",
       icon: CalendarPlus,
     },
-    {
-      name: "Approve Users",
-      href: "/admin/approve-users?status=pending&page=1",
-      icon: UserCheck,
-    },
+    { name: "Approve Users", href: "/admin/approve-users", icon: UserCheck },
     { name: "Add Candidates", href: "/admin/add-candidates", icon: Users },
     { name: "Declare Results", href: "/admin/declare-results", icon: Medal },
+    { name: "Manage Parties", href: "/admin/manage-parties", icon: Flag },
   ];
 
-  const return_title = (pathname: string) => {
-    if (pathname === "/admin") return "Dashboard";
-    if (pathname === "/admin/create-election") return "Create Election";
-    if (pathname === "/admin/approve-users?status=pending&page=1")
-      return "Approve Users";
-    if (pathname === "/admin/add-candidates") return "Add Candidates";
-    if (pathname === "/admin/declare-results") return "Declare Results";
-    return "";
-  };
+  const secondaryNavigation = [
+    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Help & Support", href: "/admin/help", icon: HelpCircle },
+  ];
 
   return (
-    <div
-      className={cn(
-        "flex flex-col h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-        {!collapsed && (
-          <Link to="/admin" className="flex items-center">
-            <span className="text-xl font-bold text-primary">
-              {return_title(pathname)}
-            </span>
-          </Link>
-        )}
+    <>
+      {isMobile && !isOpen && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto text-sidebar-foreground"
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 md:hidden"
         >
-          {collapsed ? (
-            <ChevronRight className="h-5 w-5" />
-          ) : (
-            <ChevronLeft className="h-5 w-5" />
-          )}
+          <Menu className="h-5 w-5" />
         </Button>
-      </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-1 px-2">
-          <TooltipProvider delayDuration={0}>
-            {navigation.map((item) => (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={item.href}
-                    className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      pathname === item.href ||
-                        (item.href !== "/" && pathname.startsWith(item.href))
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                      collapsed && "justify-center"
+      <div
+        className={cn(
+          "h-screen bg-card border-r border-border transition-all duration-300",
+          isOpen
+            ? isMobile
+              ? "fixed w-64"
+              : "w-64"
+            : isMobile
+            ? "w-0 -ml-64"
+            : "w-16",
+          isMobile && isOpen ? "shadow-xl" : ""
+        )}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+            {isOpen ? (
+              <Link to="/admin" className="flex items-center">
+                <span className="text-xl font-bold text-primary">Admin</span>
+              </Link>
+            ) : (
+              <Link to="/admin" className="flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-primary" />
+              </Link>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="text-muted-foreground"
+            >
+              {isOpen ? (
+                <ChevronLeft className="h-5 w-5" />
+              ) : (
+                <ChevronRight className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto py-4 px-3">
+            <TooltipProvider delayDuration={0}>
+              <nav className="space-y-1">
+                {navigation.map((item) => (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.href}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          pathname === item.href ||
+                            (item.href !== "/admin" &&
+                              pathname.startsWith(item.href))
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          !isOpen && "justify-center"
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            isOpen && "mr-3"
+                          )}
+                        />
+                        {isOpen && <span>{item.name}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!isOpen && (
+                      <TooltipContent side="right">{item.name}</TooltipContent>
                     )}
-                  >
-                    <item.icon
-                      className={cn("h-5 w-5", collapsed ? "" : "mr-3")}
-                    />
-                    {!collapsed && <span>{item.name}</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && (
-                  <TooltipContent side="right">{item.name}</TooltipContent>
-                )}
-              </Tooltip>
-            ))}
-          </TooltipProvider>
-        </nav>
-      </div>
+                  </Tooltip>
+                ))}
+              </nav>
+            </TooltipProvider>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
+            <Separator className="my-4" />
+
+            <TooltipProvider delayDuration={0}>
+              <nav className="space-y-1">
+                {secondaryNavigation.map((item) => (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.href}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          pathname === item.href
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          !isOpen && "justify-center"
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            isOpen && "mr-3"
+                          )}
+                        />
+                        {isOpen && <span>{item.name}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!isOpen && (
+                      <TooltipContent side="right">{item.name}</TooltipContent>
+                    )}
+                  </Tooltip>
+                ))}
+              </nav>
+            </TooltipProvider>
+          </div>
+
+          <div className="p-4 border-t border-border">
+            <div className="space-y-3">
               <Link
                 to="/"
                 className={cn(
-                  "w-full flex items-center text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground h-9 px-3 rounded-md",
-                  collapsed && "justify-center"
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+                  !isOpen && "justify-center"
                 )}
               >
-                <Home className={cn("h-5 w-5", collapsed ? "" : "mr-2")} />
-                {!collapsed && <span>Back to Main Site</span>}
+                <Home className={cn("h-5 w-5", isOpen && "mr-3")} />
+                {isOpen && <span>Back to Main Site</span>}
               </Link>
-            </TooltipTrigger>
-            {collapsed && (
-              <TooltipContent side="right">Back to Main Site</TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full text-destructive hover:text-destructive hover:bg-destructive/10",
+                  isOpen ? "justify-start" : "justify-center"
+                )}
+                onClick={disconnectWallet}
+              >
+                <LogOut className={cn("h-5 w-5", isOpen && "mr-3")} />
+                {isOpen && <span>Logout</span>}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Backdrop for mobile */}
+      {isMobile && isOpen && (
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
+          onClick={toggleSidebar}
+        />
+      )}
+    </>
   );
 };
 

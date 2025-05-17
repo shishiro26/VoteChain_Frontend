@@ -31,7 +31,7 @@ export const usePendingUsers = ({
         },
         withCredentials: true,
       });
-      return res.data.results;
+      return res.data.data;
     },
     staleTime: 1000 * 60 * 60,
     retry: 1,

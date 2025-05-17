@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
   Shield,
   X,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import {
   useApproveUserMutation,
@@ -32,8 +33,8 @@ import { Loader } from "@/components/ui/loader";
 import { useSearchParams } from "react-router";
 import { Dialog, DialogTitle, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useGenericMutation } from "@/hooks/useGenericMutation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Location = {
   state_name: string;
@@ -70,15 +71,20 @@ export default function ApproveUsersPage() {
     url: string;
     title: string;
   } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [rejectedReason, setRejectedReason] = useState<string>("");
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") || "pending";
   const page = searchParams.get("page") || "1";
 
-  const { data: users, isLoading } = usePendingUsers({
+  const {
+    data: users,
+    isLoading,
+    refetch,
+  } = usePendingUsers({
     page: Number(page),
     limit: 10,
-    filter: { status: status.toUpperCase() },
+    filter: { status: status.toLowerCase() },
     sortBy: "created_at:desc",
     populate: "UserDetails,UserLocation",
   });
@@ -86,18 +92,16 @@ export default function ApproveUsersPage() {
   const approve_user = useApproveUserMutation();
   const reject_user = useRejectUserMutation();
 
-  const filterUsers = (users: User[]) => {
+  const filteredUsers = useMemo(() => {
+    if (isLoading || !users) return [];
     return users.filter(
-      (user) =>
+      (user: User) =>
         user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.wallet_address.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  };
-
-  const filteredUsers =
-    !isLoading && users.length > 0 ? filterUsers(users) : [];
+  }, [isLoading, users, searchTerm]);
 
   const handleApprove = (user: User) => {
     setSelectedUser(user);
@@ -129,7 +133,6 @@ export default function ApproveUsersPage() {
   };
 
   const confirmReject = () => {
-    console.log("I am in this");
     reject_user.mutate(
       {
         userId: selectedUser.id,
@@ -159,8 +162,36 @@ export default function ApproveUsersPage() {
     setViewImageDialogOpen(true);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
   return (
     <div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Approve new users and manage existing ones
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          className="mt-4 md:mt-0"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw
+            className={cn("h-4 w-4 mr-2", {
+              "animate-spin": refreshing,
+            })}
+          />
+          Refresh
+        </Button>
+      </div>
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -199,7 +230,7 @@ export default function ApproveUsersPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: User) => (
                   <Card key={user.wallet_address}>
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
