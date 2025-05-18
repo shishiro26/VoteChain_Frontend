@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,246 +28,73 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
+import { createElectionSchema } from "@/validations";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb";
+  useConstituenciesQuery,
+  useDistrictsQuery,
+  useMandalsQuery,
+  useStatesQuery,
+} from "@/hooks/use-location";
+import { DateTimePicker } from "@/components/shared/datetime-picker";
 
-const INDIAN_STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
+const ElectionTypeOptions = [
+  { value: "by_election", label: "By Election" },
+  { value: "lok_sabha", label: "Lok Sabha Election" },
+  { value: "vidhan_sabha", label: "Vidhan Sabha Election" },
+  { value: "municipal", label: "Municipal Election" },
+  { value: "panchayat", label: "Panchayat Election" },
 ];
 
-const DISTRICTS_BY_STATE: Record<string, string[]> = {
-  "Andhra Pradesh": [
-    "Anantapur",
-    "Chittoor",
-    "East Godavari",
-    "Guntur",
-    "Krishna",
-    "Kurnool",
-    "Prakasam",
-    "Srikakulam",
-    "Visakhapatnam",
-    "Vizianagaram",
-    "West Godavari",
-    "YSR Kadapa",
-  ],
-  Delhi: [
-    "Central Delhi",
-    "East Delhi",
-    "New Delhi",
-    "North Delhi",
-    "North East Delhi",
-    "North West Delhi",
-    "Shahdara",
-    "South Delhi",
-    "South East Delhi",
-    "South West Delhi",
-    "West Delhi",
-  ],
-  Maharashtra: [
-    "Ahmednagar",
-    "Akola",
-    "Amravati",
-    "Aurangabad",
-    "Beed",
-    "Bhandara",
-    "Buldhana",
-    "Chandrapur",
-    "Dhule",
-    "Gadchiroli",
-    "Gondia",
-    "Hingoli",
-    "Jalgaon",
-    "Jalna",
-    "Kolhapur",
-    "Latur",
-    "Mumbai City",
-    "Mumbai Suburban",
-    "Nagpur",
-    "Nanded",
-    "Nandurbar",
-    "Nashik",
-    "Osmanabad",
-    "Palghar",
-    "Parbhani",
-    "Pune",
-    "Raigad",
-    "Ratnagiri",
-    "Sangli",
-    "Satara",
-    "Sindhudurg",
-    "Solapur",
-    "Thane",
-    "Wardha",
-    "Washim",
-    "Yavatmal",
-  ],
-};
-
-const CONSTITUENCIES_BY_DISTRICT: Record<string, string[]> = {
-  "Mumbai City": [
-    "Colaba",
-    "Mumbadevi",
-    "Worli",
-    "Byculla",
-    "Malabar Hill",
-    "Mahim",
-  ],
-  Pune: [
-    "Pune Cantonment",
-    "Kasba Peth",
-    "Kothrud",
-    "Parvati",
-    "Hadapsar",
-    "Shivajinagar",
-  ],
-  "Central Delhi": ["Chandni Chowk", "Matia Mahal", "Ballimaran", "Karol Bagh"],
-};
-
-const formSchema = z.object({
-  title: z.string().min(5, {
-    message: "Title must be at least 5 characters.",
-  }),
-  purpose: z.string().min(10, {
-    message: "Purpose must be at least 10 characters.",
-  }),
-  startDate: z.date({
-    required_error: "Start date is required.",
-  }),
-  endDate: z.date({
-    required_error: "End date is required.",
-  }),
-  state: z.string({
-    required_error: "State is required.",
-  }),
-  district: z.string({
-    required_error: "District is required.",
-  }),
-  constituency: z.string({
-    required_error: "Constituency is required.",
-  }),
-  status: z.string().optional().default("0"),
-});
-
 export default function CreateConstituencyElectionPage() {
-  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
-  const [availableConstituencies, setAvailableConstituencies] = useState<
-    string[]
-  >([]);
   const navigate = useNavigate();
-  //   const { toast } = useToast()
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof createElectionSchema>>({
+    resolver: zodResolver(createElectionSchema),
     defaultValues: {
       title: "",
       purpose: "",
-      state: "",
-      district: "",
-      constituency: "",
-      status: "0",
+      start_date: "",
+      end_date: "",
+      election_type: "lok_sabha",
+      state: { id: "", name: "" },
+      district: { id: "", name: "" },
+      mandal: { id: "", name: "" },
+      constituency: { id: "", name: "" },
     },
   });
 
-  // Watch for state changes to update districts
   const selectedState = form.watch("state");
   const selectedDistrict = form.watch("district");
+  const selectedMandal = form.watch("mandal");
 
-  // Update districts when state changes
-  useState(() => {
-    if (selectedState) {
-      const districts = DISTRICTS_BY_STATE[selectedState] || [];
-      setAvailableDistricts(districts);
+  const { data: states = [], isLoading: statesLoader } = useStatesQuery();
+  const { data: districts = [], isLoading: districtLoader } = useDistrictsQuery(
+    selectedState.id
+  );
+  const { data: mandals = [], isLoading: mandalLoader } = useMandalsQuery(
+    selectedDistrict.id
+  );
+  const { data: constituencies = [], isLoading: constituencyLoader } =
+    useConstituenciesQuery(selectedMandal.id);
 
-      // Reset district and constituency when state changes
-      form.setValue("district", "");
-      form.setValue("constituency", "");
-      setAvailableConstituencies([]);
-    }
-  });
+  const onSubmit = async (values: z.infer<typeof createElectionSchema>) => {
+    console.log("values", values);
 
-  // Update constituencies when district changes
-  useState(() => {
-    if (selectedDistrict) {
-      const constituencies = CONSTITUENCIES_BY_DISTRICT[selectedDistrict] || [];
-      setAvailableConstituencies(constituencies);
+    const payload = {
+      title: values.title,
+      purpose: values.purpose,
+      start_date: new Date(values.start_date).toISOString(),
+      end_date: new Date(values.end_date).toISOString(),
+      constituency_id: values.constituency.id,
+      election_type: values.election_type,
+    };
 
-      // Reset constituency when district changes
-      form.setValue("constituency", "");
-    }
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Validate dates
-    if (values.endDate < values.startDate) {
-      form.setError("endDate", {
-        type: "manual",
-        message: "End date must be after start date.",
-      });
-      return;
-    }
-
-    // Store the form data in localStorage for the next step
-    localStorage.setItem("constituencyElectionData", JSON.stringify(values));
-
-    // Simulate API call to create election
-    // toast({
-    //   title: "Election Details Saved",
-    //   description: "Please proceed to add candidates in the next step.",
-    // })
-
-    // Redirect to add candidates page
+    console.log("payload", payload);
     navigate("/admin/add-candidates");
   };
 
   return (
     <div>
-      <AdminBreadcrumb
-        items={[
-          { label: "Create Election", href: "/admin/create-election" },
-          { label: "Constituency Election" },
-        ]}
-      />
       <h1 className="text-3xl font-bold mb-8">
         Create Constituency-Level Election
       </h1>
@@ -298,8 +122,9 @@ export default function CreateConstituencyElectionPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      The official title of the election that will be displayed
-                      to voters.
+                      The official title of the election. This needs to be like
+                      constituency name + "constituency" + election type +
+                      election year.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -327,220 +152,256 @@ export default function CreateConstituencyElectionPage() {
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Start Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        The date when voting will begin.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="endDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date() ||
-                              (form.getValues("startDate") &&
-                                date < form.getValues("startDate"))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        The date when voting will end.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a state" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {INDIAN_STATES.map((state) => (
-                            <SelectItem key={state} value={state}>
-                              {state}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="district"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>District</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={
-                          !selectedState || availableDistricts.length === 0
-                        }
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a district" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableDistricts.map((district) => (
-                            <SelectItem key={district} value={district}>
-                              {district}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="constituency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Constituency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={
-                          !selectedDistrict ||
-                          availableConstituencies.length === 0
-                        }
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a constituency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableConstituencies.map((constituency) => (
-                            <SelectItem key={constituency} value={constituency}>
-                              {constituency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
-                name="status"
+                name="election_type"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                  <FormItem className="w-[50%]">
+                    <FormLabel>Election Type</FormLabel>
+                    <Select>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                        <SelectTrigger {...field}>
+                          <SelectValue placeholder="Select election type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="0">Upcoming</SelectItem>
-                        <SelectItem value="1">Ongoing</SelectItem>
+                        {ElectionTypeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      The current status of the election. Usually set to
-                      "Upcoming" when creating.
+                      A brief description of the purpose and scope of this
+                      election.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <DateTimePicker
+                        date={field.value}
+                        setDate={field.onChange}
+                        disabledDates={(date) =>
+                          date <
+                          new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+                        }
+                      />
+                      <FormDescription>
+                        The start date needs to be at least 1 day from today.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date</FormLabel>
+                      <DateTimePicker
+                        date={field.value}
+                        setDate={field.onChange}
+                        disabledDates={(date) =>
+                          date <
+                          new Date(
+                            new Date(form.getValues("start_date")).getTime() +
+                              24 * 60 * 60 * 1000
+                          )
+                        }
+                      />
+                      <FormDescription>
+                        The end date needs to be at least 1 day after the start
+                        date.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="pt-2">
+                <h3 className="text-lg font-medium mb-4">
+                  Constituency Details
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">State</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            const selected = states.find(
+                              (state: { id: string }) => state.id === value
+                            );
+                            field.onChange(selected);
+                          }}
+                          value={field.value.id}
+                        >
+                          <FormControl>
+                            <SelectTrigger loader={statesLoader}>
+                              <SelectValue placeholder="Select a state" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.isArray(states) &&
+                              states?.map(
+                                (state: { id: string; name: string }) => (
+                                  <SelectItem key={state.id} value={state.id}>
+                                    {state.name}
+                                  </SelectItem>
+                                )
+                              )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="district"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">
+                          District
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            const selected = districts.find(
+                              (district: { id: string }) =>
+                                district.id === value
+                            );
+                            field.onChange(selected);
+                          }}
+                          defaultValue={field.value.name}
+                          disabled={!selectedState?.id || districtLoader}
+                        >
+                          <FormControl>
+                            <SelectTrigger loader={districtLoader}>
+                              <SelectValue placeholder="Select a district" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.isArray(districts) &&
+                              districts.map(
+                                (district: { id: string; name: string }) => (
+                                  <SelectItem
+                                    key={district.id}
+                                    value={district.id}
+                                  >
+                                    {district.name}
+                                  </SelectItem>
+                                )
+                              )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <FormField
+                    control={form.control}
+                    name="mandal"
+                    render={({ field }) => (
+                      <FormItem className={"animate-pulse-once"}>
+                        <FormLabel className="text-foreground">
+                          Mandal
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            const selected = mandals.find(
+                              (mandal: { id: string }) => mandal.id === value
+                            );
+                            field.onChange(selected);
+                          }}
+                          defaultValue={field.value.name}
+                          disabled={!selectedDistrict.id || mandalLoader}
+                        >
+                          <FormControl>
+                            <SelectTrigger loader={mandalLoader}>
+                              <SelectValue placeholder="Select a mandal" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.isArray(mandals) &&
+                              mandals.map(
+                                (mandal: { id: string; name: string }) => (
+                                  <SelectItem key={mandal.id} value={mandal.id}>
+                                    {mandal.name}
+                                  </SelectItem>
+                                )
+                              )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="constituency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">
+                          Constituency
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            const selected = constituencies.find(
+                              (constituency: { id: string }) =>
+                                constituency.id === value
+                            );
+                            field.onChange(selected);
+                          }}
+                          defaultValue={field.value.name}
+                          disabled={!selectedMandal.id || constituencyLoader}
+                        >
+                          <FormControl>
+                            <SelectTrigger loader={constituencyLoader}>
+                              <SelectValue placeholder="Select a constituency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.isArray(constituencies) &&
+                              constituencies.map(
+                                (constituency: {
+                                  id: string;
+                                  name: string;
+                                }) => (
+                                  <SelectItem
+                                    key={constituency.id}
+                                    value={constituency.id}
+                                  >
+                                    {constituency.name}
+                                  </SelectItem>
+                                )
+                              )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               <div className="flex justify-end space-x-4">
                 <Button

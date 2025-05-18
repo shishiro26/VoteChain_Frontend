@@ -4,12 +4,10 @@ import {
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
-  Home,
   Medal,
   UserCheck,
   Users,
   Flag,
-  LogOut,
   Settings,
   HelpCircle,
   Menu,
@@ -24,7 +22,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Link, useLocation } from "react-router";
-import { useWallet } from "@/store/useWallet";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -34,7 +31,6 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ isOpen, toggleSidebar }: AdminSidebarProps) => {
   const location = useLocation();
   const pathname = location.pathname;
-  const { disconnectWallet } = useWallet();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -185,33 +181,6 @@ const AdminSidebar = ({ isOpen, toggleSidebar }: AdminSidebarProps) => {
                 ))}
               </nav>
             </TooltipProvider>
-          </div>
-
-          <div className="p-4 border-t border-border">
-            <div className="space-y-3">
-              <Link
-                to="/"
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
-                  !isOpen && "justify-center"
-                )}
-              >
-                <Home className={cn("h-5 w-5", isOpen && "mr-3")} />
-                {isOpen && <span>Back to Main Site</span>}
-              </Link>
-
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full text-destructive hover:text-destructive hover:bg-destructive/10",
-                  isOpen ? "justify-start" : "justify-center"
-                )}
-                onClick={disconnectWallet}
-              >
-                <LogOut className={cn("h-5 w-5", isOpen && "mr-3")} />
-                {isOpen && <span>Logout</span>}
-              </Button>
-            </div>
           </div>
         </div>
       </div>

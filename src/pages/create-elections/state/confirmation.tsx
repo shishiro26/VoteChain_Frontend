@@ -10,58 +10,51 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { CheckCircle, ChevronRight, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { Loader } from "@/components/ui/loader";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 
+type ElectionData = {
+  title: string;
+  purpose: string;
+  startDate: string;
+  endDate: string;
+  state: string;
+  status: string;
+};
+
 export default function ConfirmationPage() {
   const navigate = useNavigate();
-  const [electionData, setElectionData] = useState<unknown>(null);
+  const [electionData, setElectionData] = useState<ElectionData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Retrieve election data from localStorage
     const storedData = localStorage.getItem("stateElectionData");
     const templateUploaded = localStorage.getItem("templateUploaded");
 
     if (!storedData || !templateUploaded) {
-      //   toast({
-      //     title: "Incomplete Process",
-      //     description: "Please complete all steps of the election creation process.",
-      //     variant: "destructive",
-      //   })
       navigate("/admin/create-election");
       return;
     }
 
     setElectionData(JSON.parse(storedData));
-  }, [navigate, toast]);
+  }, [navigate]);
 
   const handleSubmit = () => {
     setIsSubmitting(true);
 
-    // Simulate API call to create election
     setTimeout(() => {
       setIsSubmitting(false);
 
-      // Clear localStorage
       localStorage.removeItem("stateElectionData");
       localStorage.removeItem("templateUploaded");
 
-      //   toast({
-      //     title: "Election Created Successfully",
-      //     description: "Your state-level election has been created and candidates have been added.",
-      //   })
-
-      // Navigate to admin dashboard
       navigate("/admin");
     }, 2000);
   };
 
-  // Helper function to render status badge
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case "0":
@@ -173,7 +166,7 @@ export default function ConfirmationPage() {
           <Button
             variant="outline"
             onClick={() =>
-              router.push("/admin/create-election/state/upload-template")
+              navigate("/admin/create-election/state/upload-template")
             }
           >
             Back

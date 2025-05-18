@@ -7,19 +7,21 @@ import ApproveUsersPage from "@/pages/approve-users.tsx";
 import ProfilePage from "@/pages/profile.tsx";
 import NotFound from "@/components/shared/not-found.tsx";
 import DeclareResultsPage from "@/pages/declare-results.tsx";
-import AddCandidatesPage from "@/pages/add-candidate.tsx";
+import AddCandidatesPage from "@/pages/create-elections/add-candidate.tsx";
 import CreateElectionPage from "@/pages/create-elections/create-elections.tsx";
 import CreateStateElectionPage from "@/pages/create-elections/state/state.tsx";
 import CreateConstituencyElectionPage from "@/pages/create-elections/constituency.tsx";
 import ElectionDetailPage from "@/pages/vote/[electionid].tsx";
 import ResultsPage from "@/pages/results.tsx";
 import VotePage from "@/pages/vote/page.tsx";
-import { useWallet } from "./store/useWallet.ts";
+import { useWallet } from "@/store/useWallet.ts";
+import Login from "@/pages/login.tsx";
 
 function App() {
   const { is_profile_complete } = useWallet();
   return (
     <Routes>
+      <Route path="/auth" element={<Login />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route
@@ -37,12 +39,14 @@ function App() {
           <Route path="approve-users" element={<ApproveUsersPage />} />
           <Route path="declare-results" element={<DeclareResultsPage />} />
           <Route path="add-candidates" element={<AddCandidatesPage />} />
-          <Route path="create-election" element={<CreateElectionPage />} />
-          <Route path="state" element={<CreateStateElectionPage />} />
-          <Route
-            path="constituency"
-            element={<CreateConstituencyElectionPage />}
-          />
+          <Route path="create-election">
+            <Route index element={<CreateElectionPage />} />
+            <Route
+              path="constituency"
+              element={<CreateConstituencyElectionPage />}
+            />
+            <Route path="state" element={<CreateStateElectionPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<NotFound />} />
       </Route>

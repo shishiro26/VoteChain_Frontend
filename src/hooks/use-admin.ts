@@ -65,15 +65,18 @@ export const useRejectUserMutation = () => {
     mutationFn: async ({
       userId,
       reason,
+      rejected_fields,
     }: {
       userId: string;
       reason: string;
+      rejected_fields: string[];
     }) => {
       const res = await axios.put(
         `${API}/api/v1/admin/reject_user/`,
         {
           user_id: userId,
           reason: reason,
+          rejected_fields: rejected_fields,
         },
         {
           withCredentials: true,

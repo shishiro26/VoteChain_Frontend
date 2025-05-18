@@ -1,9 +1,9 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Card,
   CardContent,
@@ -36,11 +36,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb";
 import { ProgressSteps } from "@/components/ui/progress-steps";
 import { useNavigate } from "react-router";
 
-// List of Indian states
 const INDIAN_STATES = [
   "Andhra Pradesh",
   "Arunachal Pradesh",
@@ -96,12 +94,11 @@ const formSchema = z.object({
   state: z.string({
     required_error: "State is required.",
   }),
-  status: z.string().default("0"), // 0 = Upcoming
+  status: z.string(), // 0 = Upcoming
 });
 
 export default function CreateStateElectionPage() {
   const navigate = useNavigate();
-  //   const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -140,14 +137,7 @@ export default function CreateStateElectionPage() {
 
   return (
     <div>
-      <AdminBreadcrumb
-        items={[
-          { label: "Create Election", href: "/admin/create-election" },
-          { label: "State Election" },
-        ]}
-      />
       <h1 className="text-3xl font-bold mb-4">Create State-Level Election</h1>
-
       <ProgressSteps
         steps={["Election Details", "Upload Template", "Confirmation"]}
         currentStep={0}
@@ -362,7 +352,7 @@ export default function CreateStateElectionPage() {
                 <Button
                   variant="outline"
                   type="button"
-                  onClick={() => router.push("/admin/create-election")}
+                  onClick={() => navigate("/admin/create-election")}
                 >
                   Cancel
                 </Button>

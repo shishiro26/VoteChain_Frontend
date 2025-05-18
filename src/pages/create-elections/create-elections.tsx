@@ -7,19 +7,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AdminBreadcrumb } from "@/components/ui/admin-breadcrumb";
 import { CalendarPlus, FileSpreadsheet, MapPin } from "lucide-react";
 import { Link } from "react-router";
 
 export default function CreateElectionPage() {
   return (
     <div>
-      <AdminBreadcrumb items={[{ label: "Create Election" }]} />
       <h1 className="text-3xl font-bold mb-8">Create New Election</h1>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="bg-primary/5 border-b border-border">
+          <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
               Create State-Level Election
@@ -29,7 +26,7 @@ export default function CreateElectionPage() {
               constituencies
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="">
             <p className="text-muted-foreground mb-4">
               State-level elections allow voters from across the state to
               participate. You'll be able to upload candidate data using a
@@ -52,7 +49,7 @@ export default function CreateElectionPage() {
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="bg-primary/5 border-b border-border">
+          <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center">
               <FileSpreadsheet className="mr-2 h-5 w-5" />
               Create Constituency-Level Election

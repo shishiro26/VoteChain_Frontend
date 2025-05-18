@@ -40,7 +40,6 @@ import {
   useStatesQuery,
   useUpdateProfileMutation,
 } from "@/hooks/use-location";
-import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -50,7 +49,6 @@ import { DialogTitle } from "@radix-ui/react-dialog";
 export default function UpdateProfile() {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState("personal");
-  const navigate = useNavigate();
   const { wallet } = useWallet();
   const { mutate: updateProfile, isPending } = useUpdateProfileMutation();
   const [isCameraSupported, setIsCameraSupported] = React.useState(true);
@@ -136,7 +134,6 @@ export default function UpdateProfile() {
   };
 
   const handleAadhaarCameraCapture = (imageSrc: string) => {
-    // Convert data URL to File object
     fetch(imageSrc)
       .then((res) => res.blob())
       .then((blob) => {
@@ -148,27 +145,6 @@ export default function UpdateProfile() {
         setShowAadhaarCamera(false);
       });
   };
-
-  console.log("activeTabe", activeTab);
-  if (!wallet) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Wallet Not Connected</CardTitle>
-            <CardDescription>
-              Please connect your MetaMask wallet to update your profile.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Go to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-12">

@@ -30,6 +30,7 @@ type WalletState = {
   is_profile_complete: boolean;
   role: string | null;
   profile: Profile | null;
+  connectThroughAuth: (wallet_address: string) => Promise<void>;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   setIsProfileComplete: (value: boolean) => void;
@@ -43,6 +44,48 @@ export const useWallet = create(
       is_profile_complete: false,
       role: null,
       profile: null,
+
+      connectThroughAuth: async (wallet_address: string) => {
+        set({ connecting: true });
+        try {
+          const loginResponse = await axios.post(
+            `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
+            { wallet_address },
+            { withCredentials: true }
+          );
+
+          console.log("Login Response:", loginResponse);
+          console.log("Status", loginResponse.status);
+
+          if (loginResponse.status === 200) {
+            console.group();
+            const { profile_completed } = loginResponse.data.data;
+            const decodeResponse = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
+              { withCredentials: true }
+            );
+
+            const { wallet_address, role } = decodeResponse.data.data;
+
+            set({
+              wallet: wallet_address,
+              role,
+              is_profile_complete: profile_completed,
+            });
+
+            if (profile_completed) {
+              toast.success("Wallet Connected successfully");
+            } else {
+              toast.warning("Wallet connected. Please complete your profile.");
+            }
+          }
+        } catch (error) {
+          console.error("Wallet connect error:", error);
+          toast.error("Failed to connect wallet");
+        } finally {
+          set({ connecting: false });
+        }
+      },
 
       connectWallet: async () => {
         set({ connecting: true });
@@ -133,6 +176,7 @@ export const useWallet = create(
         connectWallet: state.connectWallet,
         disconnectWallet: state.disconnectWallet,
         setIsProfileComplete: state.setIsProfileComplete,
+        connectThroughAuth: state.connectThroughAuth,
       }),
     }
   )
