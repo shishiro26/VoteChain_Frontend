@@ -8,8 +8,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ProgressSteps } from "@/components/shared/progress-steps";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Info } from "lucide-react";
 import { z } from "zod";
@@ -38,7 +36,6 @@ import { UserSearch } from "@/components/shared/admin/user-search";
 import { Loader } from "@/components/ui/loader";
 import { useNavigate } from "react-router";
 
-// User model type
 interface UserType {
   id: string;
   name: string;
@@ -247,8 +244,6 @@ export default function CreateConstituencyElectionPage() {
       <h1 className="text-3xl font-bold mb-4">
         Create Constituency-Level Election
       </h1>
-
-      <ProgressSteps steps={steps} currentStep={currentStep} className="mb-6" />
 
       <Card className="max-w-4xl">
         <CardHeader>

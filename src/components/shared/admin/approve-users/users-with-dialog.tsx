@@ -29,7 +29,7 @@ import {
   AlertTriangle,
   Maximize,
 } from "lucide-react";
-import { formaDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/formatDate";
 
 type Location = {
   state_name: string;
@@ -102,7 +102,7 @@ export function UserDetailsDialog({
                   </Badge>
                   <span>•</span>
                   <span>
-                    Registered on {formaDate(new Date(user.created_at))}
+                    Registered on {formatDate(new Date(user.created_at))}
                   </span>
                 </DialogDescription>
               </div>
@@ -231,7 +231,7 @@ export function UserDetailsDialog({
                           User registered and created their profile
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formaDate(new Date(user.created_at))}
+                          {formatDate(new Date(user.created_at))}
                         </p>
                       </div>
                     </div>
@@ -246,7 +246,7 @@ export function UserDetailsDialog({
                           User submitted documents for verification on
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formaDate(new Date(user?.submitted_at))}{" "}
+                          {formatDate(new Date(user?.submitted_at))}{" "}
                         </p>
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export function UserDetailsDialog({
                             Admin approved user verification on
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formaDate(new Date(user?.submitted_at))}
+                            {formatDate(new Date(user?.submitted_at))}
                           </p>
                         </div>
                       </div>

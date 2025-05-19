@@ -16,6 +16,9 @@ import ResultsPage from "@/pages/results.tsx";
 import VotePage from "@/pages/vote/page.tsx";
 import { useWallet } from "@/store/useWallet.ts";
 import Login from "@/pages/login.tsx";
+import ManagePartiesPage from "@/pages/manage-parties/manage-parties.tsx";
+import SecurePartyCreationPage from "@/pages/parties/page.tsx";
+import VerifyEmailToken from "@/pages/parties/verify-email-token.tsx";
 
 function App() {
   const { is_profile_complete } = useWallet();
@@ -24,6 +27,7 @@ function App() {
       <Route path="/auth" element={<Login />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/party/verify" element={<VerifyEmailToken />} />
         <Route
           path="/update-profile"
           element={
@@ -34,11 +38,13 @@ function App() {
         <Route path="/vote/:id" element={<ElectionDetailPage />} />
         <Route path="/vote" element={<VotePage />} />
         <Route path="/profile/:id" element={<ProfilePage />} />
+        <Route path="/party/update/" element={<SecurePartyCreationPage />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<>Hello This is the admin page</>} />
           <Route path="approve-users" element={<ApproveUsersPage />} />
           <Route path="declare-results" element={<DeclareResultsPage />} />
           <Route path="add-candidates" element={<AddCandidatesPage />} />
+          <Route path="manage-parties" element={<ManagePartiesPage />} />
           <Route path="create-election">
             <Route index element={<CreateElectionPage />} />
             <Route

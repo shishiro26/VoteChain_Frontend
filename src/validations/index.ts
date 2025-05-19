@@ -206,3 +206,41 @@ export const createElectionSchema = z
       path: ["end_date"],
     }
   );
+
+export const createPartyFormSchema = z.object({
+  party_name: z.string().nonempty("Party name is required"),
+  party_symbol: z.string().nonempty("Party symbol is required"),
+  leader_name: z.string().nonempty("Leader name is required"),
+  leader_email: z
+    .string()
+    .email("Invalid email address")
+    .nonempty("Leader email is required"),
+  link_expiry: z.coerce
+    .number({
+      required_error: "Link expiry is required",
+      invalid_type_error: "Link expiry must be a number",
+    })
+    .min(1, "Link expiry must be at least 1 day")
+    .max(30, "Link expiry cannot be more than 30 days"),
+});
+
+export const updatePartyFormSchema = z.object({
+  contact_email: z.string().email("Invalid email format"),
+  description: z.string(),
+  abbreviation: z.string(),
+  website: z.string().url("Invalid URL format"),
+  contact_phone: z
+    .string()
+    .trim()
+    .regex(/^\d{10,15}$/, {
+      message:
+        "Phone number must be between 10 and 15 digits and contain only digits",
+    }),
+  party_image: z
+    .any()
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
+      message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
+    }),
+  manifesto: z.any().optional(),
+});

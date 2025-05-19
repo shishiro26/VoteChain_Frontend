@@ -1,5 +1,5 @@
+import { api } from "@/api/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -21,7 +21,7 @@ export const usePendingUsers = ({
   return useQuery({
     queryKey: ["pending-user", { page, limit, sortBy, filter, populate }],
     queryFn: async () => {
-      const res = await axios.get(`${API}/api/v1/admin/pending_users`, {
+      const res = await api.get(`${API}/api/v1/admin/pending_users`, {
         params: {
           page,
           limit,
@@ -29,7 +29,6 @@ export const usePendingUsers = ({
           filter,
           populate,
         },
-        withCredentials: true,
       });
       return res.data.data;
     },
@@ -42,15 +41,9 @@ export const useApproveUserMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId }: { userId: string }) => {
-      const res = await axios.put(
-        `${API}/api/v1/admin/approve_user/`,
-        {
-          user_id: userId,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await api.put(`${API}/api/v1/admin/approve_user/`, {
+        user_id: userId,
+      });
       return res.data.message;
     },
     onSuccess: () => {
@@ -71,17 +64,11 @@ export const useRejectUserMutation = () => {
       reason: string;
       rejected_fields: string[];
     }) => {
-      const res = await axios.put(
-        `${API}/api/v1/admin/reject_user/`,
-        {
-          user_id: userId,
-          reason: reason,
-          rejected_fields: rejected_fields,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await api.put(`${API}/api/v1/admin/reject_user/`, {
+        user_id: userId,
+        reason: reason,
+        rejected_fields: rejected_fields,
+      });
       return res.data.message;
     },
     onSuccess: () => {

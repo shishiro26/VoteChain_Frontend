@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router";
 import {
   BarChart3,
   CalendarPlus,
@@ -22,8 +21,8 @@ import {
 
 const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const pathname = usePathname();
-
+  const location = useLocation();
+  const pathname = location.pathname;
   // Auto-collapse on mobile
   useEffect(() => {
     const handleResize = () => {
