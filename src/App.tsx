@@ -4,7 +4,7 @@ import Layout from "@/layout/Layout.tsx";
 import AdminLayout from "@/layout/AdminLayout.tsx";
 import UpdateProfile from "@/pages/update-profile.tsx";
 import ApproveUsersPage from "@/pages/approve-users.tsx";
-import ProfilePage from "@/pages/profile.tsx";
+import ProfilePage from "@/pages/profile/page.tsx";
 import NotFound from "@/components/shared/not-found.tsx";
 import DeclareResultsPage from "@/pages/declare-results.tsx";
 import AddCandidatesPage from "@/pages/create-elections/add-candidate.tsx";
@@ -19,6 +19,8 @@ import Login from "@/pages/login.tsx";
 import ManagePartiesPage from "@/pages/manage-parties/manage-parties.tsx";
 import SecurePartyCreationPage from "@/pages/parties/page.tsx";
 import VerifyEmailToken from "@/pages/parties/verify-email-token.tsx";
+import PartiesPage from "@/pages/parties/browse-party.tsx";
+import PartyDetailsPage from "@/pages/parties/party-details-page.tsx";
 
 function App() {
   const { is_profile_complete } = useWallet();
@@ -39,6 +41,8 @@ function App() {
         <Route path="/vote" element={<VotePage />} />
         <Route path="/profile/:id" element={<ProfilePage />} />
         <Route path="/party/update/" element={<SecurePartyCreationPage />} />
+        <Route path="/parties/:id" element={<PartyDetailsPage />} />
+        <Route path="/browse/parties" element={<PartiesPage />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<>Hello This is the admin page</>} />
           <Route path="approve-users" element={<ApproveUsersPage />} />

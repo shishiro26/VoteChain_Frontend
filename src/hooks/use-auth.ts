@@ -6,7 +6,7 @@ export const useAuth = () => {
 
   const isAuthenticated = !!wallet;
   const checkIsAdmin = role === "admin";
-  const checkIsPartyLeader = role === "party_leader";
+  const checkIsPartyLeader = role === "phead";
   const checkIsCandidate = role === "candidate";
 
   return {

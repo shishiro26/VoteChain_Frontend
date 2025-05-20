@@ -572,7 +572,7 @@ export default function CreateConstituencyElectionPage() {
             <DialogTitle>Add Candidate</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <UserSearch onUserSelect={handleUserSelect} showPartyInfo={true} />
+            {/* <UserSearch onUserSelect={handleUserSelect} showPartyInfo={true} /> */}
           </div>
         </DialogContent>
       </Dialog>

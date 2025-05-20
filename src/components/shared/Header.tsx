@@ -45,7 +45,7 @@ export default function Header() {
     { name: "Home", href: "/" },
     { name: "Vote", href: "/vote" },
     { name: "Results", href: "/results" },
-    { name: "Parties", href: "/parties" },
+    { name: "Parties", href: "/browse/parties" },
   ];
 
   const truncateAddress = (address: string) => {

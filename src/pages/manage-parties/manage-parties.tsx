@@ -48,6 +48,7 @@ export default function ManagePartiesPage() {
   const [selectedParty, setSelectedParty] = useState<Party | null>(null);
   const page = searchParams.get("page") || "1";
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePageChange = (newPage: number) => {
     setSearchParams((prevParams) => {
       const newParams = new URLSearchParams(prevParams);

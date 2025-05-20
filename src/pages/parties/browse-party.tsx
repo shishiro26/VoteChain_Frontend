@@ -1,0 +1,241 @@
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Users, UserIcon, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate, useSearchParams } from "react-router";
+import { useGetAllPartiesQuery } from "@/api";
+import { formatDate } from "@/utils/formatDate";
+import { Loader } from "@/components/ui/loader";
+import { getPartyStatusBadge } from "@/utils/status-badge";
+
+export default function PartiesPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("browse");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const page = searchParams.get("page") || "1";
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handlePageChange = (newPage: number) => {
+    setSearchParams((prevParams) => {
+      const newParams = new URLSearchParams(prevParams);
+      newParams.set("page", newPage.toString());
+      return newParams;
+    });
+  };
+
+  const { data: partiesData, isLoading } = useGetAllPartiesQuery({
+    page: Number(page),
+    limit: 10,
+    sortBy: "created_at:desc",
+    populate: "details,Candidate,leader.UserDetails",
+  });
+
+  const filteredParties = partiesData?.results ?? [];
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Political Parties</h1>
+          <p className="text-muted-foreground mt-1">
+            Join an existing party or request to create your own
+          </p>
+        </div>
+      </div>
+
+      <Alert className="mb-6">
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          To create a new political party, please contact the election
+          commission. Only authorized users with a special link can register new
+          parties.
+        </AlertDescription>
+      </Alert>
+
+      <Tabs
+        defaultValue={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="mb-6">
+          <TabsTrigger
+            value="browse"
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
+            <Users className="w-4 h-4" /> Browse Parties
+          </TabsTrigger>
+          <TabsTrigger
+            value="my-parties"
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
+            <UserIcon className="w-4 h-4" /> My Parties
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="browse">
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search parties..."
+                className="pl-10 w-1/2"
+                disabled={isLoading}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          {isLoading ? (
+            <Loader size="lg" text="Loading parties..." />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredParties.map((party: Party) => (
+                <Card key={party.id} className="overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={party.logo || "/placeholder.svg"}
+                          alt={`${party.name} logo`}
+                          className="w-12 h-12 rounded-full object-cover border"
+                        />
+                        <div>
+                          <CardTitle className="text-xl">
+                            {party.name}
+                          </CardTitle>
+                          <CardDescription>
+                            Founded {formatDate(new Date(party.created_at))}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      {getPartyStatusBadge(party.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                      {party.description}
+                    </p>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Users className="w-4 h-4 mr-1" />{" "}
+                      {party.candidate_count.toLocaleString()} members
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 border-t pt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        navigate(`/parties/${party.id}`);
+                      }}
+                      disabled={party.status !== "active"}
+                    >
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {filteredParties.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                No parties found matching your search.
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="my-parties">
+          {/* {userParties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {userParties.map((party) => (
+                <Card key={party.id} className="overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={party.logo || "/placeholder.svg"}
+                          alt={`${party.name} logo`}
+                          className="w-12 h-12 rounded-full object-cover border"
+                        />
+                        <div>
+                          <CardTitle className="text-xl">
+                            {party.name}
+                          </CardTitle>
+                          <div className="mt-1">
+                            {getMembershipBadge(party.membershipStatus)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {party.description}
+                    </p>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <CalendarIcon className="w-4 h-4 mr-1" /> Joined on{" "}
+                      {new Date(party.joinedDate).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 border-t pt-4 flex justify-between">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/parties/${party.id}`)}
+                    >
+                      View Party
+                    </Button>
+                    {party.membershipStatus === "leader" && (
+                      <Button
+                        onClick={() => navigate(`/parties/${party.id}/manage`)}
+                      >
+                        Manage Party
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>You haven't joined any parties yet</CardTitle>
+                <CardDescription>
+                  Browse available parties to join one
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <Users className="w-16 h-16 text-muted-foreground mb-4" />
+                <p className="text-center text-muted-foreground mb-6">
+                  Joining a political party allows you to participate in
+                  internal elections and represent the party in national
+                  elections.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab("browse")}
+                >
+                  Browse Parties
+                </Button>
+              </CardContent>
+            </Card>
+          )} */}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

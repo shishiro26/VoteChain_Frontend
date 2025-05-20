@@ -8,43 +8,8 @@ import {
 } from "@/components/ui/table";
 
 import { Button } from "@/components/ui/button";
-
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertTriangle, Eye } from "lucide-react";
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "active":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-500/10 text-green-500 border-green-500/20"
-        >
-          <CheckCircle className="w-3 h-3 mr-1" /> Active
-        </Badge>
-      );
-    case "pending":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-amber-500/10 text-amber-500 border-amber-500/20"
-        >
-          <Clock className="w-3 h-3 mr-1" /> Pending Verification
-        </Badge>
-      );
-    case "expired":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-destructive/10 text-destructive border-destructive/20"
-        >
-          <AlertTriangle className="w-3 h-3 mr-1" /> Expired
-        </Badge>
-      );
-    default:
-      return null;
-  }
-};
+import { getPartyStatusBadge } from "@/utils/status-badge";
+import { Eye } from "lucide-react";
 
 type Party = {
   id: string;
@@ -112,7 +77,7 @@ const Party_table = ({
               </p>
             </TableCell>
             <TableCell>{party.candidate_count.toLocaleString()}</TableCell>
-            <TableCell>{getStatusBadge(party.status)}</TableCell>
+            <TableCell>{getPartyStatusBadge(party.status)}</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
                 {party.status !== "pending" && (

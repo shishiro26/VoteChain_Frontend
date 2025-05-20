@@ -16,6 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCreatePartyMutation } from "@/api";
 import { Loader } from "@/components/ui/loader";
+import { UserCheck } from "lucide-react";
+import UserSearch from "../admin/user-search";
+import { toast } from "sonner";
 
 const COMMON_SYMBOLS = [
   "🦁",
@@ -33,7 +36,28 @@ const COMMON_SYMBOLS = [
   "🌊",
   "🔥",
   "🌻",
+  "🌟",
+  "🌙",
+  "🌼",
+  "🌸",
+  "🌺",
+  "🌷",
+  "🌻",
 ];
+
+type User = {
+  id: string;
+  wallet_address: string;
+  status: string;
+  role: string;
+  UserDetails: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone_number: string;
+    profile_image: string;
+  }[];
+};
 
 const PartyForm = ({
   setGeneratedLink,
@@ -41,6 +65,7 @@ const PartyForm = ({
   setGeneratedLink: React.Dispatch<React.SetStateAction<string | null>>;
 }) => {
   const [selectedSymbol, setSelectedSymbol] = React.useState<string>("");
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
 
   const form = useForm<z.infer<typeof createPartyFormSchema>>({
     resolver: zodResolver(createPartyFormSchema),
@@ -67,19 +92,42 @@ const PartyForm = ({
     form.setValue("party_symbol", symbol);
   };
 
+  React.useEffect(() => {
+    if (selectedUser) {
+      form.setValue(
+        "leader_name",
+        `${selectedUser.UserDetails[0].first_name} ${selectedUser.UserDetails[0].last_name}`
+      );
+      form.setValue("leader_email", selectedUser.UserDetails[0].email);
+    }
+  }, [selectedUser, form]);
+
   const onSubmit = async (data: z.infer<typeof createPartyFormSchema>) => {
+    if (!selectedUser) {
+      toast.error("Please select a party leader");
+      return;
+    }
     const payload = {
       party_name: data.party_name,
       party_symbol: data.party_symbol,
-      user_id: "682aecdcba8823fc9633c474",
+      user_id: selectedUser?.id,
       link_expiry: data.link_expiry,
     };
 
     createParty.mutate(payload, {
       onSuccess: (res) => {
-        console.log("Party created successfully", res);
         form.reset();
         setGeneratedLink(res.url);
+      },
+      onError: (error) => {
+        toast.error("Failed to create party. Please try again.");
+        console.error("Error creating party:", error);
+      },
+      onSettled: () => {
+        setSelectedUser(null);
+        setSelectedSymbol(
+          COMMON_SYMBOLS[Math.floor(Math.random() * COMMON_SYMBOLS.length)]
+        );
       },
     });
   };
@@ -148,43 +196,55 @@ const PartyForm = ({
             )}
           />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="leader_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Leader Name</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter the leader's full name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>Name of the party leader</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+        <div className="bg-muted p-4 rounded-lg border">
+          <h3 className="text-lg font-medium mb-4 flex items-center">
+            <UserCheck className="mr-2 h-5 w-5" /> Party Leader Information
+          </h3>
+          <UserSearch
+            selectedUser={selectedUser}
+            onUserSelect={setSelectedUser}
           />
 
-          <FormField
-            control={form.control}
-            name="leader_email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Leader Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter the leader's email"
-                    type="email"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>Email of the party leader</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="leader_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Leader Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter the leader's full name"
+                      disabled
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>Name of the party leader</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="leader_email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Leader Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter the leader's email"
+                      type="email"
+                      {...field}
+                      disabled
+                    />
+                  </FormControl>
+                  <FormDescription>Email of the party leader</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
         <FormField
           control={form.control}

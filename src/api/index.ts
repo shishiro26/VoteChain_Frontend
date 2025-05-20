@@ -123,3 +123,25 @@ export const useUpdatePartyMutation = (token: string) => {
     },
   });
 };
+
+export const useGetPartyDetailsByWalletId = (
+  party_id: string,
+  wallet_address: string
+) => {
+  const isValidPartyId = party_id !== undefined && party_id !== "";
+  const isValidWalletAddress =
+    wallet_address !== undefined && wallet_address !== "";
+  return useQuery({
+    queryKey: ["party-details-by-wallet", party_id, wallet_address],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/party/get_party/${party_id}`, {
+        params: {
+          wallet_address,
+          party_id,
+        },
+      });
+      return res.data.data;
+    },
+    enabled: isValidPartyId && isValidWalletAddress,
+  });
+};
