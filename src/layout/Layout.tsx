@@ -10,12 +10,28 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useGetProfileDetailsByWalletId } from "@/api";
+import { useWallet } from "@/store/useWallet";
+import React from "react";
 
 const Layout = () => {
   const { isAuthenticated } = useAuth();
+  const { walletAddress, isProfileComplete, profile, setProfile } = useWallet();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
+  const { data } = useGetProfileDetailsByWalletId(
+    walletAddress || "",
+    isProfileComplete,
+    Boolean(profile)
+  );
+
+  React.useEffect(() => {
+    if (data) {
+      setProfile(data);
+    }
+  }, [data, setProfile]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

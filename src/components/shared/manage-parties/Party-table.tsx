@@ -11,28 +11,6 @@ import { Button } from "@/components/ui/button";
 import { getPartyStatusBadge } from "@/utils/status-badge";
 import { Eye } from "lucide-react";
 
-type Party = {
-  id: string;
-  name: string;
-  symbol: string;
-  abbreviation: string;
-  logo: string;
-  description: string;
-  contact_email: string;
-  contact_phone: string;
-  website: string;
-  leader_name: string;
-  leader_wallet_address: string;
-  leader_email: string;
-  verify_token: null | string;
-  token_url: null | string;
-  token_expiry: null | string;
-  candidate_count: number;
-  created_at: string;
-  status: string;
-  link_status: string;
-};
-
 const Party_table = ({
   party,
   handleViewParty,
@@ -76,11 +54,13 @@ const Party_table = ({
                 {party.leader_email}
               </p>
             </TableCell>
-            <TableCell>{party.candidate_count.toLocaleString()}</TableCell>
-            <TableCell>{getPartyStatusBadge(party.status)}</TableCell>
+            <TableCell>{party.partyMembersCount.toLocaleString()}</TableCell>
+            <TableCell>
+              {getPartyStatusBadge(party.logo ? "active" : "pending")}
+            </TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                {party.status !== "pending" && (
+                {party.logo && (
                   <Button
                     variant="outline"
                     size="sm"

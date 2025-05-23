@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useWallet } from "./store/useWallet";
 
 export default function Home() {
-  const { wallet, connectWallet, connecting, is_profile_complete } =
+  const { walletAddress, connectWallet, connecting, isProfileComplete } =
     useWallet();
 
   return (
@@ -20,7 +20,7 @@ export default function Home() {
             VoteChain leverages blockchain technology and AI verification to
             enable fair, tamper-proof elections.
           </p>
-          {wallet ? (
+          {walletAddress ? (
             <Link to="/vote">
               <Button size="lg" className="gap-2">
                 Start Voting <ArrowRight className="h-4 w-4" />
@@ -156,10 +156,10 @@ export default function Home() {
             Join thousands of forward-thinking citizens who are embracing
             secure, transparent blockchain voting.
           </p>
-          {wallet ? (
+          {walletAddress ? (
             <div className="space-y-4">
               <p className="text-primary font-medium">Wallet Connected!</p>
-              {!is_profile_complete && (
+              {!isProfileComplete && (
                 <Link to="/update-profile">
                   <Button size="lg" className="gap-2">
                     Complete Your Profile <ArrowRight className="h-4 w-4" />

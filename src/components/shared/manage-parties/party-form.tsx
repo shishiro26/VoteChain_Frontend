@@ -45,20 +45,6 @@ const COMMON_SYMBOLS = [
   "🌻",
 ];
 
-type User = {
-  id: string;
-  wallet_address: string;
-  status: string;
-  role: string;
-  UserDetails: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number: string;
-    profile_image: string;
-  }[];
-};
-
 const PartyForm = ({
   setGeneratedLink,
 }: {
@@ -70,11 +56,11 @@ const PartyForm = ({
   const form = useForm<z.infer<typeof createPartyFormSchema>>({
     resolver: zodResolver(createPartyFormSchema),
     defaultValues: {
-      party_name: "",
-      party_symbol: "",
-      leader_name: "",
-      leader_email: "",
-      link_expiry: 7,
+      partyName: "",
+      partySymbol: "",
+      leaderName: "",
+      leaderEmail: "",
+      linkExpiry: 7,
     },
   });
 
@@ -84,21 +70,21 @@ const PartyForm = ({
     const randomSymbol =
       COMMON_SYMBOLS[Math.floor(Math.random() * COMMON_SYMBOLS.length)];
     setSelectedSymbol(randomSymbol);
-    form.setValue("party_symbol", randomSymbol);
+    form.setValue("partySymbol", randomSymbol);
   }, [form]);
 
   const handleSymbolSelect = (symbol: string) => {
     setSelectedSymbol(symbol);
-    form.setValue("party_symbol", symbol);
+    form.setValue("partySymbol", symbol);
   };
 
   React.useEffect(() => {
     if (selectedUser) {
       form.setValue(
-        "leader_name",
-        `${selectedUser.UserDetails[0].first_name} ${selectedUser.UserDetails[0].last_name}`
+        "leaderName",
+        `${selectedUser.firstName} ${selectedUser.lastName}`
       );
-      form.setValue("leader_email", selectedUser.UserDetails[0].email);
+      form.setValue("leaderEmail", selectedUser.email);
     }
   }, [selectedUser, form]);
 
@@ -108,10 +94,10 @@ const PartyForm = ({
       return;
     }
     const payload = {
-      party_name: data.party_name,
-      party_symbol: data.party_symbol,
-      user_id: selectedUser?.id,
-      link_expiry: data.link_expiry,
+      partyName: data.partyName,
+      partySymbol: data.partySymbol,
+      userId: selectedUser?.id,
+      linkExpiry: data.linkExpiry,
     };
 
     createParty.mutate(payload, {
@@ -138,7 +124,7 @@ const PartyForm = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="party_name"
+            name="partyName"
             render={({ field }) => (
               <FormItem className="flex  flex-col">
                 <FormLabel>Party Name</FormLabel>
@@ -156,7 +142,7 @@ const PartyForm = ({
 
           <FormField
             control={form.control}
-            name="party_symbol"
+            name="partySymbol"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Party Symbol (Emoji)</FormLabel>
@@ -208,7 +194,7 @@ const PartyForm = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="leader_name"
+              name="leaderName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Leader Name</FormLabel>
@@ -227,7 +213,7 @@ const PartyForm = ({
 
             <FormField
               control={form.control}
-              name="leader_email"
+              name="leaderEmail"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Leader Email</FormLabel>
@@ -248,7 +234,7 @@ const PartyForm = ({
         </div>
         <FormField
           control={form.control}
-          name="link_expiry"
+          name="linkExpiry"
           render={({ field }) => (
             <FormItem className="w-1/2">
               <FormLabel>Link Expiry (Days)</FormLabel>

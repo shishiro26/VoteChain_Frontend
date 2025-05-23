@@ -15,22 +15,25 @@ import { useWallet } from "@/store/useWallet";
 import { useGetPartyDetailsByWalletId } from "@/api";
 import { getMembershipBadge, getPartyStatusBadge } from "@/utils/status-badge";
 
-type Candidate = {
-  image: string;
+interface Member {
+  id: string;
   name: string;
-  constituency: string;
-  election: string;
-};
+  walletAddress: string;
+  role: string;
+  phone: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  image: string;
+}
 
 export default function PartyDetailsPage() {
-  const { wallet } = useWallet();
+  const { walletAddress } = useWallet();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname.split("/")[2];
 
   const { data: partyData, isLoading } = useGetPartyDetailsByWalletId(
     pathname,
-    wallet ? wallet : ""
+    walletAddress ? walletAddress : ""
   );
 
   if (isLoading || !partyData) {
@@ -40,6 +43,14 @@ export default function PartyDetailsPage() {
       </div>
     );
   }
+
+  const truncateAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const filteredMembers = partyData.members?.filter(
+    (member: Member) => member.status === "APPROVED"
+  );
 
   return (
     <div className="container mx-auto px-4 py-4">
@@ -67,14 +78,17 @@ export default function PartyDetailsPage() {
                       <CardTitle className="text-2xl">
                         {partyData.name}
                       </CardTitle>
-                      {getPartyStatusBadge(partyData.status)}
+                      {getPartyStatusBadge(
+                        partyData.logo ? "active" : "pending"
+                      )}
                     </div>
                     <CardDescription className="mt-1">
-                      {partyData.shortName} • Founded in {partyData.founded}
+                      {partyData.abbreviation} • Founded in{" "}
+                      {new Date(partyData.founded_on).toLocaleDateString()}
                     </CardDescription>
                   </div>
                 </div>
-                {getMembershipBadge("leader")}
+                {getMembershipBadge(partyData.memberStatus.toLowerCase())}
               </div>
             </CardHeader>
             <CardContent>
@@ -120,17 +134,16 @@ export default function PartyDetailsPage() {
                     <CardContent className="p-2">
                       <div className="flex items-center gap-3">
                         <img
-                          src={partyData.leaders[0].image || "/placeholder.svg"}
-                          alt={partyData.leaders[0].name}
+                          src={partyData.leader_image || "/placeholder.svg"}
+                          alt={partyData.leader_name}
                           className="w-12 h-12 rounded-full object-cover border"
                         />
                         <div>
                           <h4 className="font-medium">
-                            {partyData.leaders[0].name}
+                            {partyData.leader_name}
                           </h4>
                           <p className="text-sm text-muted-foreground flex items-center">
-                            <CrownIcon className="h-4 w-4 mr-2" />{" "}
-                            {partyData.leaders[0].position}
+                            <CrownIcon className="h-4 w-4 mr-2" /> Party Leader
                           </p>
                         </div>
                       </div>
@@ -140,38 +153,37 @@ export default function PartyDetailsPage() {
 
                 <TabsContent value="candidates">
                   <div className="space-y-4 max-h-[55vh] overflow-y-auto">
-                    {partyData.recentCandidates?.length === 0 ? (
+                    {filteredMembers.recentCandidates?.length === 0 ? (
                       <p className="text-muted-foreground">
                         No recent candidates found.
                       </p>
                     ) : (
-                      partyData.recentCandidates?.map(
-                        (candidate: Candidate) => (
-                          <Card
-                            key={candidate.name}
-                            className="overflow-hidden"
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={candidate.image || "/placeholder.svg"}
-                                  alt={candidate.name || "Candidate"}
-                                  className="w-12 h-12 rounded-full object-cover border"
-                                />
-                                <div>
-                                  <h4 className="font-medium">
-                                    {candidate.name}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {candidate.constituency} •{" "}
-                                    {candidate.election}
-                                  </p>
-                                </div>
+                      filteredMembers?.map((member: Member) => (
+                        <Card key={member.name} className="overflow-hidden">
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={member.image || "/placeholder.svg"}
+                                alt={member.name || "Member"}
+                                className="w-12 h-12 rounded-full object-cover border"
+                              />
+                              <div>
+                                <h4 className="font-medium">{member.name}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {truncateAddress(member.walletAddress)} •{" "}
+                                  {member.role === "PHEAD" ? (
+                                    <span className="text-primary">
+                                      Party Head
+                                    </span>
+                                  ) : (
+                                    member.role.toLocaleUpperCase()
+                                  )}
+                                </p>
                               </div>
-                            </CardContent>
-                          </Card>
-                        )
-                      )
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
                     )}
                   </div>
                 </TabsContent>

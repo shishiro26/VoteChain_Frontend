@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/store/useWallet";
 
 const UserWallet = () => {
-  const { wallet } = useWallet();
+  const { walletAddress } = useWallet();
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -21,7 +21,7 @@ const UserWallet = () => {
           <p className="text-sm text-muted-foreground mb-1">
             Connected Wallet Address
           </p>
-          <p className="font-mono break-all">{wallet}</p>
+          <p className="font-mono break-all">{walletAddress}</p>
         </div>
 
         <div className="mt-4 flex items-center justify-between">
@@ -37,7 +37,10 @@ const UserWallet = () => {
             variant="outline"
             size="sm"
             onClick={() =>
-              window.open(`https://etherscan.io/address/${wallet}`, "_blank")
+              window.open(
+                `https://etherscan.io/address/${walletAddress}`,
+                "_blank"
+              )
             }
           >
             View on Etherscan

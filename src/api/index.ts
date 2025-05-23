@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./axios";
 
@@ -14,18 +15,18 @@ export const useCreatePartyMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
-      party_name: string;
-      party_symbol: string;
-      user_id: string;
-      link_expiry: number;
+      partyName: string;
+      partySymbol: string;
+      userId: string;
+      linkExpiry: number;
     }) => {
       const res = await api.post(
         `${API}/api/v1/admin/create-party`,
         {
-          party_name: payload.party_name,
-          party_symbol: payload.party_symbol,
-          user_id: payload.user_id,
-          link_expiry: payload.link_expiry,
+          partyName: payload.partyName,
+          partySymbol: payload.partySymbol,
+          userId: payload.userId,
+          linkExpiry: payload.linkExpiry,
         },
         {
           withCredentials: true,
@@ -68,13 +69,13 @@ export const useVerifyEmailToken = () => {
   return useMutation({
     mutationFn: async ({
       token,
-      wallet_address,
+      walletAddress,
     }: {
       token: string;
-      wallet_address: string;
+      walletAddress: string;
     }) => {
       const res = await api.post(
-        `${API}/api/v1/party/verify/?wallet_address=${wallet_address}&token=${token}`
+        `${API}/api/v1/party/verify/?walletAddress=${walletAddress}&token=${token}`
       );
 
       return res.data.data;
@@ -83,18 +84,28 @@ export const useVerifyEmailToken = () => {
 };
 
 export const useGetPartyDetailsByToken = (token: string) => {
-  const isValidToken = token !== undefined && token !== "" && token !== null;
+  const isValidToken = !!token;
 
   return useQuery({
     queryKey: ["party-details", token],
     queryFn: async () => {
-      const res = await api.get(
-        `${API}/api/v1/party/details_by_token?token=${token}`
-      );
-      return res.data.data;
+      try {
+        const res = await api.get(
+          `${API}/api/v1/party/details_by_token?token=${token}`
+        );
+        return res.data.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message =
+            err.response?.data?.message || "Failed to fetch party details";
+          throw new Error(message);
+        }
+        throw err;
+      }
     },
     enabled: isValidToken,
     initialData: null,
+    retry: false,
   });
 };
 
@@ -125,23 +136,140 @@ export const useUpdatePartyMutation = (token: string) => {
 };
 
 export const useGetPartyDetailsByWalletId = (
-  party_id: string,
-  wallet_address: string
+  partyId: string,
+  walletAddress: string
 ) => {
-  const isValidPartyId = party_id !== undefined && party_id !== "";
+  const isValidPartyId = partyId !== undefined && partyId !== "";
   const isValidWalletAddress =
-    wallet_address !== undefined && wallet_address !== "";
+    walletAddress !== undefined && walletAddress !== "";
   return useQuery({
-    queryKey: ["party-details-by-wallet", party_id, wallet_address],
+    queryKey: ["party-details-by-wallet", partyId, walletAddress],
     queryFn: async () => {
-      const res = await api.get(`${API}/api/v1/party/get_party/${party_id}`, {
+      const res = await api.get(`${API}/api/v1/party/get_party/`, {
         params: {
-          wallet_address,
-          party_id,
+          walletAddress,
+          partyId,
+        },
+      });
+      if (res.status !== 200) {
+        throw new Error(res.data);
+      }
+      return res.data.data;
+    },
+    enabled: isValidPartyId && isValidWalletAddress,
+  });
+};
+
+export const useGetProfileDetailsByWalletId = (
+  walletAddress: string,
+  isProfileComplete: boolean,
+  profile: boolean
+) => {
+  return useQuery({
+    queryKey: ["profile", walletAddress],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/auth/user/`, {
+        params: {
+          walletAddress,
+        },
+      });
+      console.log("res", res.data);
+      return res.data.data;
+    },
+    enabled: !!walletAddress && isProfileComplete && !profile,
+  });
+};
+
+export const useGetPartyMembers = (
+  {
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt:desc",
+    filter = {},
+    populate,
+  }: ParamFilters = {
+    page: 1,
+    limit: 10,
+    sortBy: "createdAt:desc",
+    filter: {},
+  }
+) => {
+  return useQuery({
+    queryKey: [
+      "party-members",
+      page,
+      limit,
+      sortBy,
+      JSON.stringify(filter),
+      populate,
+    ],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/party/get_members`, {
+        params: {
+          page,
+          limit,
+          sortBy,
+          filter,
+          populate,
         },
       });
       return res.data.data;
     },
-    enabled: isValidPartyId && isValidWalletAddress,
+  });
+};
+
+export const useJoinPartyMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { partyId: string }) => {
+      const res = await api.post(
+        `${API}/api/v1/party/join-party`,
+        {
+          partyId: payload.partyId,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["party-members"] });
+    },
+  });
+};
+
+export const useApprovePartyMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { partyId: string; userId: string }) => {
+      const res = await api.post(`${API}/api/v1/party/approve-user`, {
+        partyId: payload.partyId,
+        userId: payload.userId,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["party-members"] });
+    },
+  });
+};
+
+export const useRejectPartyMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { partyId: string; userId: string }) => {
+      const res = await api.post(`${API}/api/v1/party/reject-user`, {
+        partyId: payload.partyId,
+        userId: payload.userId,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["party-members"] });
+    },
   });
 };

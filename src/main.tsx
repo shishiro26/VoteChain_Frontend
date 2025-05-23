@@ -14,7 +14,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <ThemeProvider>
         <ReactQueryProvider>
-          <Toaster richColors />
+          <Toaster richColors closeButton />
           <App />
           <SessionExpiredAlert />
         </ReactQueryProvider>

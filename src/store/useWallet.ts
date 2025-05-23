@@ -3,77 +3,110 @@ import { persist } from "zustand/middleware";
 import axios from "axios";
 import { toast } from "sonner";
 
-type LocationType = {
+type Party = {
   id: string;
   name: string;
+  symbol: string;
+  logo: string;
+  description: string;
+  isLeader: boolean;
+  joinDate: string;
+  pending_count: number | null;
+  approved_count: number | null;
+  rejected_count: number | null;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  headquarters: string;
+  website: string;
+  contact_email: string;
+  contact_phone: string;
+  founded_on: Date;
+  abbreviation: string;
 };
+
 type Location = {
-  state: LocationType;
-  district: LocationType;
-  mandal: LocationType;
-  constituency: LocationType;
+  state: string;
+  constituency: string;
 };
 
 type Profile = {
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-  status: string;
+  id: string;
+  walletAddress: string;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "INCOMPLETE";
+  role: "PHEAD" | "ADMIN" | "USER";
+  verifiedAt: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
   email: string;
-  profile_image: string;
+  partyId: string | null;
+  party: Party | null;
   location: Location;
+  profileImage: string;
 };
 
 type WalletState = {
-  wallet: string | null;
+  walletAddress: string | null;
   connecting: boolean;
-  is_profile_complete: boolean;
+  isProfileComplete: boolean;
+  isProfileApproved: boolean;
   role: string | null;
   profile: Profile | null;
-  connectThroughAuth: (wallet_address: string) => Promise<void>;
+  connectThroughAuth: (walletAddress: string) => Promise<void>;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   setIsProfileComplete: (value: boolean) => void;
+  setProfile: (profile: Profile) => void;
 };
 
 export const useWallet = create(
   persist<WalletState>(
     (set) => ({
-      wallet: null,
+      walletAddress: null,
       connecting: false,
-      is_profile_complete: false,
+      isProfileComplete: false,
+      isProfileApproved: false,
       role: null,
       profile: null,
+      setProfile: (profile: Profile) => {
+        set({ profile });
+      },
 
-      connectThroughAuth: async (wallet_address: string) => {
+      connectThroughAuth: async (walletAddress: string) => {
         set({ connecting: true });
         try {
           const loginResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
-            { wallet_address },
+            { walletAddress },
             { withCredentials: true }
           );
 
-          console.log("Login Response:", loginResponse);
-          console.log("Status", loginResponse.status);
-
-          if (loginResponse.status === 200) {
-            console.group();
-            const { profile_completed } = loginResponse.data.data;
+          if (loginResponse.status === 200 || loginResponse.status === 201) {
             const decodeResponse = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
               { withCredentials: true }
             );
+            console.log("Decoded response:", loginResponse);
+            console.log("Decoded response:", decodeResponse.data.data);
 
-            const { wallet_address, role } = decodeResponse.data.data;
+            const { walletAddress, role, status } = decodeResponse.data.data;
+            let profileCompleted = true;
+            if (status === "INCOMPLETE") {
+              profileCompleted = false;
+            }
+
+            let profileApproved = false;
+            if (status === "APPROVED") {
+              profileApproved = true;
+            }
 
             set({
-              wallet: wallet_address,
+              walletAddress,
               role,
-              is_profile_complete: profile_completed,
+              isProfileComplete: profileCompleted,
+              isProfileApproved: profileApproved,
             });
 
-            if (profile_completed) {
+            if (profileCompleted) {
               toast.success("Wallet Connected successfully");
             } else {
               toast.warning("Wallet connected. Please complete your profile.");
@@ -104,30 +137,31 @@ export const useWallet = create(
 
           const loginResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/v1/auth/login`,
-            { wallet_address: account },
+            { walletAddress: account },
             { withCredentials: true }
           );
 
-          console.log("Login Response:", loginResponse);
-          console.log("Status", loginResponse.status);
-
-          if (loginResponse.status === 200) {
-            console.group();
-            const { profile_completed } = loginResponse.data.data;
+          if (loginResponse.status === 200 || loginResponse.status === 201) {
             const decodeResponse = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
               { withCredentials: true }
             );
 
-            const { wallet_address, role } = decodeResponse.data.data;
+            const { walletAddress, role, status } = decodeResponse.data.data;
+            let profileCompleted = true;
+
+            if (status === "INCOMPLETE") {
+              profileCompleted = false;
+            }
 
             set({
-              wallet: wallet_address,
+              walletAddress: walletAddress,
               role,
-              is_profile_complete: profile_completed,
+              isProfileComplete: profileCompleted,
+              isProfileApproved: status === "APPROVED",
             });
 
-            if (profile_completed) {
+            if (profileCompleted) {
               toast.success("Wallet Connected successfully");
             } else {
               toast.warning("Wallet connected. Please complete your profile.");
@@ -152,8 +186,8 @@ export const useWallet = create(
           toast.error("Logout failed on server");
         } finally {
           set({
-            wallet: null,
-            is_profile_complete: false,
+            walletAddress: null,
+            isProfileComplete: false,
             role: null,
             profile: null,
           });
@@ -162,21 +196,23 @@ export const useWallet = create(
       },
 
       setIsProfileComplete: (value: boolean) => {
-        set({ is_profile_complete: value });
+        set({ isProfileComplete: value });
       },
     }),
     {
       name: "wallet-store",
       partialize: (state) => ({
-        wallet: state.wallet,
+        walletAddress: state.walletAddress,
         connecting: state.connecting,
-        is_profile_complete: state.is_profile_complete,
+        isProfileComplete: state.isProfileComplete,
+        isProfileApproved: state.isProfileApproved,
         role: state.role,
         profile: state.profile,
         connectWallet: state.connectWallet,
         disconnectWallet: state.disconnectWallet,
         setIsProfileComplete: state.setIsProfileComplete,
         connectThroughAuth: state.connectThroughAuth,
+        setProfile: state.setProfile,
       }),
     }
   )

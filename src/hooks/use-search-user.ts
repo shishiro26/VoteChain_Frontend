@@ -3,20 +3,20 @@ import { api } from "@/api/axios";
 
 export const useSearchUser = () => {
   const mutationFn = async ({
-    wallet_address,
+    walletAddress,
     status,
     role,
   }: {
-    wallet_address: string;
+    walletAddress: string;
     status: string;
     role: string;
   }) => {
-    if (!wallet_address) {
+    if (!walletAddress) {
       throw new Error("Wallet address is required");
     }
 
     const res = await api.get(`/api/v1/auth/search`, {
-      params: { wallet_address, status, role },
+      params: { walletAddress, status, role },
     });
 
     return res.data.data;

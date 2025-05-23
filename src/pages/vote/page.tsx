@@ -173,7 +173,7 @@ const CONSTITUENCIES = [
 ];
 
 export default function VotePage() {
-  const { wallet, is_profile_complete } = useWallet();
+  const { walletAddress, isProfileComplete } = useWallet();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [stateFilter, setStateFilter] = useState("All States");
@@ -192,12 +192,12 @@ export default function VotePage() {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   useEffect(() => {
-    if (!wallet) {
+    if (!walletAddress) {
       navigate("/");
-    } else if (!is_profile_complete) {
+    } else if (!isProfileComplete) {
       navigate("/update-profile");
     }
-  }, [wallet, is_profile_complete, navigate]);
+  }, [walletAddress, isProfileComplete, navigate]);
 
   // Filter elections based on search term and filters
   useEffect(() => {
@@ -309,7 +309,7 @@ export default function VotePage() {
     setEndDateFilter(undefined);
   };
 
-  if (!wallet) {
+  if (!walletAddress) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Card className="max-w-md mx-auto">
@@ -329,7 +329,7 @@ export default function VotePage() {
     );
   }
 
-  if (!is_profile_complete) {
+  if (!isProfileComplete) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Card className="max-w-md mx-auto">

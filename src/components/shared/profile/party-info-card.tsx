@@ -9,46 +9,73 @@ import { Button } from "@/components/ui/button";
 
 import { Loader } from "@/components/ui/loader";
 import { Users, Calendar, Mail, Phone, Globe } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useWallet } from "@/store/useWallet";
-import { useAuth } from "@/hooks/use-auth";
+import { formatDate } from "@/utils/formatDate";
+import { useJoinPartyMutation } from "@/api";
+import { toast } from "sonner";
 
-export type Leader = {
-  name: string;
-  position: string;
-  image: string;
-  wallet_address: string;
-};
-
-export type Candidate = {
-  name: string;
-  constituency: string;
-  election: string;
-  image: string;
-};
-
-export type Party = {
+interface Member {
   id: string;
   name: string;
-  shortName: string;
-  logo: string;
-  members: number;
-  description: string;
-  status: "pending" | "active" | "expired" | "verified";
-  founded: string;
-  ideology: string;
-  contactEmail: string;
-  contactPhone: string;
-  website: string;
-  manifesto: boolean;
-  leaders: Leader[];
-  recentCandidates: Candidate[];
-};
+  walletAddress: string;
+  role: string;
+  phone: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  image: string;
+}
 
-const PartyInfoCard = ({ party }: { party: Party }) => {
+interface PartyDetails {
+  id: string;
+  name: string;
+  symbol: string;
+  logo: string;
+  description: string;
+  contact_email: string;
+  contact_phone: string;
+  website: string;
+  abbreviation: string;
+  headquarters: string;
+  founded_on: string;
+  facebook_url: string | null;
+  twitter_url: string | null;
+  instagram_url: string | null;
+  leader_name: string;
+  leader_wallet_address: string;
+  leader_email: string;
+  leader_image: string;
+  memberStatus: "PENDING" | "APPROVED" | "REJECTED" | "NOT_MEMBER";
+  members: Member[];
+}
+
+const PartyInfoCard = ({ party }: { party: PartyDetails }) => {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
-  const { checkIsPartyLeader } = useAuth();
+  const { profile } = useWallet();
+  const location = useLocation();
+  const partyId = location.pathname.split("/")[2];
+  const { walletAddress } = useWallet();
+  const isPartyLeader = party.leader_wallet_address === walletAddress;
+
+  const join_party = useJoinPartyMutation();
+
+  const handleJoinParty = () => {
+    console.log("Join Party", party.memberStatus);
+    if (party.memberStatus === "NOT_MEMBER") {
+      join_party.mutate(
+        { partyId },
+        {
+          onSuccess: () => {
+            console.log("Party Joined");
+          },
+          onError: (error) => {
+            console.error("Error Joining Party", error);
+            toast.error("Error Joining Party. Please try again later.");
+          },
+        }
+      );
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -60,7 +87,7 @@ const PartyInfoCard = ({ party }: { party: Party }) => {
           <div>
             <p className="font-medium">Members</p>
             <p className="text-muted-foreground">
-              {party.members.toLocaleString()} registered members
+              {party.members.length.toLocaleString()} registered members
             </p>
           </div>
         </div>
@@ -69,7 +96,9 @@ const PartyInfoCard = ({ party }: { party: Party }) => {
           <Calendar className="w-5 h-5 text-primary mt-0.5" />
           <div>
             <p className="font-medium">Founded</p>
-            <p className="text-muted-foreground">{party.founded}</p>
+            <p className="text-muted-foreground">
+              {formatDate(new Date(party.founded_on))}
+            </p>
           </div>
         </div>
 
@@ -77,7 +106,7 @@ const PartyInfoCard = ({ party }: { party: Party }) => {
           <Mail className="w-5 h-5 text-primary mt-0.5" />
           <div>
             <p className="font-medium">Contact Email</p>
-            <p className="text-muted-foreground">{party.contactEmail}</p>
+            <p className="text-muted-foreground">{party.contact_email}</p>
           </div>
         </div>
 
@@ -85,7 +114,7 @@ const PartyInfoCard = ({ party }: { party: Party }) => {
           <Phone className="w-5 h-5 text-primary mt-0.5" />
           <div>
             <p className="font-medium">Contact Phone</p>
-            <p className="text-muted-foreground">+91 {party.contactPhone}</p>
+            <p className="text-muted-foreground">+91 {party.contact_phone}</p>
           </div>
         </div>
 
@@ -107,98 +136,58 @@ const PartyInfoCard = ({ party }: { party: Party }) => {
         )}
       </CardContent>
       <CardFooter className="border-t pt-4">
-        {party.status === "pending" ? (
-          <Button className="w-full" variant={"outline"} disabled>
+        {profile?.partyId && profile?.partyId !== partyId ? (
+          <Button type="button" className="w-full" variant="outline" disabled>
+            You are already member of {profile.party?.name}
+          </Button>
+        ) : !party.logo ? (
+          <Button className="w-full" variant="outline" disabled>
             <Loader className="mr-2" size="sm" /> Party Verification Pending
           </Button>
-        ) : party.leaders[0].wallet_address === wallet && checkIsPartyLeader ? (
+        ) : isPartyLeader ? (
           <Button
             type="button"
             className="w-full"
             variant="outline"
             onClick={() => navigate(`/parties/${party.id}/edit`)}
-            disabled={false}
           >
             View Candidates
           </Button>
-        ) : !checkIsPartyLeader ? (
+        ) : party.memberStatus === "APPROVED" ? (
           <Button
             type="button"
             className="w-full"
             variant="outline"
             onClick={() => navigate(`/parties/${party.id}/candidates`)}
-            disabled={false}
+            disabled
           >
+            You are a member
+          </Button>
+        ) : party.memberStatus === "PENDING" ? (
+          <Button type="button" className="w-full" variant="outline" disabled>
+            Membership Pending
+          </Button>
+        ) : party.memberStatus === "REJECTED" ? (
+          <Button
+            type="button"
+            className="w-full"
+            variant="destructive"
+            disabled
+          >
+            You have been rejected
+          </Button>
+        ) : party.memberStatus === "NOT_MEMBER" ? (
+          <Button
+            type="button"
+            className="w-full"
+            variant="outline"
+            onClick={handleJoinParty}
+            disabled={join_party.isPending}
+          >
+            {join_party.isPending && <Loader className="mr-2" size="sm" />}
             Join Party
           </Button>
-        ) : (
-          <Button
-            type="button"
-            className="w-full"
-            variant="outline"
-            onClick={() => navigate(`/parties/${party.id}/candidates`)}
-            disabled={false}
-          >
-            View Candidates
-          </Button>
-        )}
-        {/* {!membershipStatus ? (
-          <Button
-            className="w-full"
-            onClick={handleJoinParty}
-            disabled={isJoining}
-          >
-            {isJoining ? (
-              <>
-                <Loader className="mr-2" size="sm" /> Joining...
-              </>
-            ) : (
-              <>Join Party</>
-            )}
-          </Button>
-        ) : membershipStatus === "pending" ? (
-          <Button variant="outline" className="w-full" disabled>
-            <Clock className="mr-2 h-4 w-4" /> Membership Pending
-          </Button>
-        ) : (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full text-destructive hover:text-destructive"
-              >
-                Leave Party
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Leave Party</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to leave {party.name}? This action
-                  cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => {}}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleLeaveParty}
-                  disabled={isLeaving}
-                >
-                  {isLeaving ? (
-                    <>
-                      <Loader className="mr-2" size="sm" /> Leaving...
-                    </>
-                  ) : (
-                    <>Confirm Leave</>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )} */}
+        ) : null}
       </CardFooter>
     </Card>
   );

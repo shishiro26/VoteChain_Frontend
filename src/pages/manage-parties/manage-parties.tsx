@@ -19,27 +19,6 @@ import { Copy, LinkIcon, Search, Users } from "lucide-react";
 import { useGetAllPartiesQuery } from "@/api";
 import { useSearchParams } from "react-router";
 
-type Party = {
-  id: string;
-  name: string;
-  symbol: string;
-  abbreviation: string;
-  logo: string;
-  description: string;
-  contact_email: string;
-  contact_phone: string;
-  website: string;
-  leader_name: string;
-  leader_wallet_address: string;
-  leader_email: string;
-  verify_token: null | string;
-  token_url: null | string;
-  token_expiry: null | string;
-  candidate_count: number;
-  created_at: string;
-  status: string;
-  link_status: string;
-};
 export default function ManagePartiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showPartyDetailsDialog, setShowPartyDetailsDialog] = useState(false);
@@ -60,8 +39,8 @@ export default function ManagePartiesPage() {
   const { data: partiesData, isLoading } = useGetAllPartiesQuery({
     page: Number(page),
     limit: 10,
-    sortBy: "created_at:desc",
-    populate: "details,Candidate,leader.UserDetails",
+    sortBy: "createdAt:desc",
+    populate: "details,partyMembers.user.userDetails,tokens",
   });
 
   const filteredParties = partiesData?.results ?? [];

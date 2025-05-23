@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { useConnectivityStore } from "./store/useConnectivity.ts";
 import { toast } from "sonner";
+import { handleAxiosError } from "./utils/errorHandler.ts";
 
 onlineManager.setEventListener((setOnline) => {
   const handleOnline = () => {
@@ -53,6 +54,11 @@ export function ReactQueryProvider({ children }: React.PropsWithChildren) {
         console.error(err);
       },
     }),
+    defaultOptions: {
+      mutations: {
+        onError: (error) => handleAxiosError(error),
+      },
+    },
   });
 
   return (

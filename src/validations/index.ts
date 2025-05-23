@@ -2,106 +2,61 @@ import * as z from "zod";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif"];
+const oneDayMs = 24 * 60 * 60 * 1000;
 
-export const update_user_schema = z.object({
-  first_name: z
-    .string({
-      required_error: "First name is required",
-    })
-    .min(2, {
-      message: "First name must be at least 2 characters long",
-    }),
-  last_name: z
-    .string({
-      required_error: "Last name is required",
-    })
-    .min(2, {
-      message: "Last name must be at least 2 characters long",
-    }),
-  phone_number: z
-    .string({
-      required_error: "Phone number is required",
-    })
-    .min(10, {
-      message: "Phone number must be at least 10 digits",
-    })
-    .max(15, {
-      message: "Phone number must be at most 15 digits",
-    })
-    .regex(/^\d+$/, {
-      message: "Phone number must contain only digits",
-    }),
-  email: z.string().refine(
-    (val) => {
-      return !val || val.length <= 50;
-    },
-    {
-      message: "Email must be less than 50 characters",
-    }
-  ),
-  state: z.object({
-    id: z
-      .string()
-      .min(1, {
-        message: "State is required",
-      })
-      .trim()
-      .toLowerCase(),
-    name: z.string().min(1, {
-      message: "State is required",
-    }),
+const locationSchema = z.object({
+  id: z.string().min(1, { message: "ID is required" }).trim().toLowerCase(),
+  name: z.string().min(1, { message: "Name is required" }),
+});
+
+export const updateUserSchema = z.object({
+  firstName: z
+    .string({ required_error: "First name is required" })
+    .min(2, { message: "First name must be at least 2 characters long" }),
+
+  lastName: z
+    .string({ required_error: "Last name is required" })
+    .min(2, { message: "Last name must be at least 2 characters long" }),
+
+  phoneNumber: z
+    .string({ required_error: "Phone number is required" })
+    .min(10, { message: "Phone number must be at least 10 digits" })
+    .max(15, { message: "Phone number must be at most 15 digits" })
+    .regex(/^\d+$/, { message: "Phone number must contain only digits" }),
+
+  email: z
+    .string()
+    .email("Invalid email address")
+    .max(50, "Email must be less than 50 characters"),
+
+  dob: z.date({
+    required_error: "A date of birth is required.",
   }),
-  district: z.object({
-    id: z
-      .string()
-      .min(1, {
-        message: "District is required",
-      })
-      .trim()
-      .toLowerCase(),
-    name: z.string().min(1, {
-      message: "District is required",
-    }),
-  }),
-  mandal: z.object({
-    id: z
-      .string()
-      .min(1, {
-        message: "Mandal is required",
-      })
-      .trim()
-      .toLowerCase(),
-    name: z.string().min(1, {
-      message: "Mandal is required",
-    }),
-  }),
-  constituency: z.object({
-    id: z
-      .string()
-      .min(1, {
-        message: "Constituency is required",
-      })
-      .trim()
-      .toLowerCase(),
-    name: z.string().min(1, {
-      message: "Constituency is required",
-    }),
-  }),
-  profile_image: z
+
+  aadharNumber: z
+    .string()
+    .length(12, "Aadhar number must be exactly 12 digits")
+    .regex(/^\d+$/, "Aadhar number must contain only digits"),
+
+  state: locationSchema,
+  district: locationSchema,
+  mandal: locationSchema,
+  constituency: locationSchema,
+
+  profileImage: z
     .any()
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => file?.size <= MAX_FILE_SIZE, "MAX image size is 5MB.")
     .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
       message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
     }),
-  aadhar_image: z
+
+  aadharImage: z
     .any()
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => file?.size <= MAX_FILE_SIZE, "MAX image size is 5MB.")
     .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
       message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
     }),
 });
-
-const oneDayMs = 24 * 60 * 60 * 1000;
 
 export const createElectionSchema = z
   .object({
@@ -111,10 +66,10 @@ export const createElectionSchema = z
       .max(100, { message: "Title must be at most 100 characters long" })
       .nonempty({ message: "Title is required" })
       .refine((val) => /^[a-zA-Z0-9 ]+$/.test(val), {
-        message:
-          "Title can only contain letters, numbers, and spaces (no special characters)",
+        message: "Title can only contain letters, numbers, and spaces",
       })
       .transform((val) => val.replace(/\s+/g, "").toLowerCase()),
+
     purpose: z
       .string()
       .min(10, { message: "Purpose must be at least 10 characters long" })
@@ -122,11 +77,11 @@ export const createElectionSchema = z
       .nonempty({ message: "Purpose is required" })
       .refine((val) => /^[a-zA-Z0-9 -]+$/.test(val), {
         message:
-          "Purpose can only contain letters, numbers, and spaces (no special characters)",
+          "Purpose can only contain letters, numbers, spaces, and dashes",
       })
       .transform((val) => val.replace(/\s+/g, "").toLowerCase()),
 
-    start_date: z
+    startDate: z
       .string()
       .datetime({ message: "Invalid start date format" })
       .refine(
@@ -138,84 +93,42 @@ export const createElectionSchema = z
         { message: "Start date must be at least 1 day from today" }
       ),
 
-    end_date: z.string().datetime({ message: "Invalid end date format" }),
-    election_type: z.enum(
-      ["lok_sabha", "vidhan_sabha", "municipal", "panchayat", "by_election"],
+    endDate: z.string().datetime({ message: "Invalid end date format" }),
+
+    electionType: z.enum(
+      ["LOK_SABHA", "VIDHAN_SABHA", "MUNICIPAL", "PANCHAYAT", "BY_ELECTION"],
       {
         errorMap: () => ({ message: "Invalid election type" }),
       }
     ),
 
-    state: z.object({
-      id: z
-        .string()
-        .min(1, {
-          message: "State is required",
-        })
-        .trim()
-        .toLowerCase(),
-      name: z.string().min(1, {
-        message: "State is required",
-      }),
-    }),
-    district: z.object({
-      id: z
-        .string()
-        .min(1, {
-          message: "District is required",
-        })
-        .trim()
-        .toLowerCase(),
-      name: z.string().min(1, {
-        message: "District is required",
-      }),
-    }),
-    mandal: z.object({
-      id: z
-        .string()
-        .min(1, {
-          message: "Mandal is required",
-        })
-        .trim()
-        .toLowerCase(),
-      name: z.string().min(1, {
-        message: "Mandal is required",
-      }),
-    }),
-    constituency: z.object({
-      id: z
-        .string()
-        .min(1, {
-          message: "Constituency is required",
-        })
-        .trim()
-        .toLowerCase(),
-      name: z.string().min(1, {
-        message: "Constituency is required",
-      }),
-    }),
+    state: locationSchema,
+    district: locationSchema,
+    mandal: locationSchema,
+    constituency: locationSchema,
   })
   .refine(
     (data) => {
-      const start = new Date(data.start_date);
-      const end = new Date(data.end_date);
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
       return end.getTime() - start.getTime() >= oneDayMs;
     },
     {
       message: "End date must be at least 1 day after start date",
-      path: ["end_date"],
+      path: ["endDate"],
     }
   );
 
+// Schema: Create Party
 export const createPartyFormSchema = z.object({
-  party_name: z.string().nonempty("Party name is required"),
-  party_symbol: z.string().nonempty("Party symbol is required"),
-  leader_name: z.string().nonempty("Leader name is required"),
-  leader_email: z
+  partyName: z.string().nonempty("Party name is required"),
+  partySymbol: z.string().nonempty("Party symbol is required"),
+  leaderName: z.string().nonempty("Leader name is required"),
+  leaderEmail: z
     .string()
     .email("Invalid email address")
     .nonempty("Leader email is required"),
-  link_expiry: z.coerce
+  linkExpiry: z.coerce
     .number({
       required_error: "Link expiry is required",
       invalid_type_error: "Link expiry must be a number",
@@ -224,23 +137,33 @@ export const createPartyFormSchema = z.object({
     .max(30, "Link expiry cannot be more than 30 days"),
 });
 
+// Schema: Update Party
 export const updatePartyFormSchema = z.object({
-  contact_email: z.string().email("Invalid email format"),
-  description: z.string(),
-  abbreviation: z.string(),
-  website: z.string().url("Invalid URL format"),
-  contact_phone: z
+  contactEmail: z.string().email("Invalid email format"),
+  description: z.string().optional(),
+  abbreviation: z.string().optional(),
+  website: z.string().url("Invalid URL format").optional(),
+
+  contactPhone: z
     .string()
     .trim()
     .regex(/^\d{10,15}$/, {
       message:
         "Phone number must be between 10 and 15 digits and contain only digits",
     }),
+  headquarters: z.string(),
+  foundedOn: z.date({
+    required_error: "A date of birth is required.",
+  }),
+  facebook_url: z.string().url("Invalid URL format").optional(),
+  twitter_url: z.string().url("Invalid URL format").optional(),
+  instagram_url: z.string().url("Invalid URL format").optional(),
   party_image: z
     .any()
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `MAX image size is 5MB.`)
+    .refine((file) => file?.size <= MAX_FILE_SIZE, "MAX image size is 5MB.")
     .refine((file) => ALLOWED_FILE_TYPES.includes(file?.type), {
       message: `Allowed file types are: ${ALLOWED_FILE_TYPES.join(", ")}`,
     }),
+
   manifesto: z.any().optional(),
 });

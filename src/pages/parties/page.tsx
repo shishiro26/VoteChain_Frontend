@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -22,13 +22,19 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader } from "@/components/shared/loaders/loader";
-import { Upload, Info, AlertTriangle } from "lucide-react";
+import { Upload, Info, AlertTriangle, Calendar1Icon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { useLocation, useNavigate } from "react-router";
 import { updatePartyFormSchema } from "@/validations";
 import { useGetPartyDetailsByToken, useUpdatePartyMutation } from "@/api";
 import { toast } from "sonner";
+import { handleAxiosError } from "@/utils/errorHandler";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { PopoverContent } from "@radix-ui/react-popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export default function SecurePartyCreationPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -38,9 +44,18 @@ export default function SecurePartyCreationPage() {
   const navigate = useNavigate();
   const params = new URLSearchParams(useLocation().search);
   const token = params!.get("token");
-  const { data: partyDetails, isLoading } = useGetPartyDetailsByToken(
-    token || ""
-  );
+  const {
+    data: partyDetails,
+    isLoading,
+    error,
+    isError,
+  } = useGetPartyDetailsByToken(token || "");
+
+  useEffect(() => {
+    if (isError && error) {
+      setTokenError((error as Error).message);
+    }
+  }, [isError, error]);
 
   const updateParty = useUpdatePartyMutation(token || "");
 
@@ -51,9 +66,11 @@ export default function SecurePartyCreationPage() {
       party_image: null,
       manifesto: null,
       abbreviation: "",
-      contact_email: "",
-      contact_phone: "",
+      contactEmail: "",
+      contactPhone: "",
       website: "",
+      headquarters: "",
+      foundedOn: new Date(),
     },
   });
 
@@ -75,26 +92,21 @@ export default function SecurePartyCreationPage() {
 
     for (const [key, value] of Object.entries(values)) {
       if (key === "party_image" && value instanceof File) {
-        formData.append(key, value);
+        formData.append("partyImage", value);
       } else if (typeof value === "string") {
         formData.append(key, value);
+      } else if (key === "foundedOn" && value instanceof Date) {
+        formData.append("foundedOn", value.toISOString());
       }
     }
 
     updateParty.mutate(formData, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         form.reset();
         toast.success("Party updated successfully");
-        navigate("/");
+        navigate(`/parties/${data.id}`);
       },
-      onError: (error) => {
-        if (error instanceof Error) {
-          setTokenError(error.message);
-        } else {
-          setTokenError("An unknown error occurred");
-        }
-        toast.error("Failed to update party");
-      },
+      onError: (error) => handleAxiosError(error),
     });
   };
   if (tokenError) {
@@ -115,13 +127,20 @@ export default function SecurePartyCreationPage() {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => navigate("/parties")} className="w-full">
+            <Button
+              onClick={() => navigate("/browse/parties")}
+              className="w-full"
+            >
               Return to Parties
             </Button>
           </CardFooter>
         </Card>
       </div>
     );
+  }
+
+  if (isError) {
+    console.log("Error fetching party details", isError);
   }
 
   return (
@@ -133,7 +152,7 @@ export default function SecurePartyCreationPage() {
             Add additional details to complete your party registration
           </CardDescription>
         </CardHeader>
-        {isLoading || !partyDetails ? (
+        {!partyDetails ? (
           <CardContent>
             <Loader size="lg" text="Fetching Party Details" />
           </CardContent>
@@ -191,7 +210,75 @@ export default function SecurePartyCreationPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="contact_email"
+                      name="headquarters"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Party Headquarters</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter your party's headquarters location"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            The official headquarters of your political party
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="foundedOn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Founded On</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <Calendar1Icon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0 bg-gray-50"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown-buttons"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                fromYear={1960}
+                                toYear={new Date().getFullYear()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription>
+                            The date your political party was founded
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="contactEmail"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Contact Email</FormLabel>
@@ -211,7 +298,7 @@ export default function SecurePartyCreationPage() {
                     />
                     <FormField
                       control={form.control}
-                      name="contact_phone"
+                      name="contactPhone"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Contact Phone</FormLabel>

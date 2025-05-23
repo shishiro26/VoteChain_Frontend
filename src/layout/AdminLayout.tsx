@@ -9,7 +9,7 @@ import { Loader } from "@/components/ui/loader";
 import AdminSidebar from "@/components/shared/AdminSidebar";
 
 export default function AdminLayout() {
-  const { wallet } = useWallet();
+  const { walletAddress } = useWallet();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -30,7 +30,7 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const checkAuthorization = async () => {
-      if (!wallet) {
+      if (!walletAddress) {
         navigate("/");
         return;
       }
@@ -45,7 +45,7 @@ export default function AdminLayout() {
     };
 
     checkAuthorization();
-  }, [wallet, navigate, checkIsAdmin]);
+  }, [walletAddress, navigate, checkIsAdmin]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

@@ -2,7 +2,7 @@ import * as z from "zod";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AlertTriangle, Camera, FileText } from "lucide-react";
+import { AlertTriangle, CalendarIcon, Camera, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWallet } from "@/store/useWallet";
-import { update_user_schema } from "@/validations";
+import { updateUserSchema } from "@/validations";
 import { toast } from "sonner";
 import {
   useConstituenciesQuery,
@@ -45,11 +45,19 @@ import { TabsContent } from "@radix-ui/react-tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CameraCapture } from "@/components/shared/camera-capture";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function UpdateProfile() {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState("personal");
-  const { wallet } = useWallet();
+  const { walletAddress } = useWallet();
   const { mutate: updateProfile, isPending } = useUpdateProfileMutation();
   const [isCameraSupported, setIsCameraSupported] = React.useState(true);
   const [aadharImagePreview, setAadharImagePreview] = React.useState<
@@ -67,19 +75,13 @@ export default function UpdateProfile() {
     }
   }, []);
 
-  const form = useForm<z.infer<typeof update_user_schema>>({
-    resolver: zodResolver(update_user_schema),
+  const form = useForm<z.infer<typeof updateUserSchema>>({
+    resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      phone_number: "",
-      email: "",
       state: { id: "", name: "" },
       district: { id: "", name: "" },
       mandal: { id: "", name: "" },
       constituency: { id: "", name: "" },
-      profile_image: null,
-      aadhar_image: null,
     },
   });
 
@@ -97,8 +99,8 @@ export default function UpdateProfile() {
   const { data: constituencies = [], isLoading: constituencyLoader } =
     useConstituenciesQuery(selectedMandal.id);
 
-  const onSubmit = async (values: z.infer<typeof update_user_schema>) => {
-    if (!wallet) {
+  const onSubmit = async (values: z.infer<typeof updateUserSchema>) => {
+    if (!walletAddress) {
       toast.message("Wallet not connected", {
         description: "Please connect your MetaMask wallet first",
       });
@@ -112,7 +114,9 @@ export default function UpdateProfile() {
         key === "mandal" ||
         key === "constituency"
       ) {
-        formData.append(`${key}_id`, value.id);
+        formData.append(`${key}Id`, value.id);
+      } else if (key === "dob") {
+        formData.append(key, format(value, "yyyy-MM-dd"));
       } else {
         formData.append(key, value);
       }
@@ -127,7 +131,7 @@ export default function UpdateProfile() {
         const file = new File([blob], "profile-photo.png", {
           type: "image/png",
         });
-        form.setValue("profile_image", file);
+        form.setValue("profileImage", file);
         setImagePreview(imageSrc);
         setShowCamera(false);
       });
@@ -140,7 +144,7 @@ export default function UpdateProfile() {
         const file = new File([blob], "aadhaar-photo.png", {
           type: "image/png",
         });
-        form.setValue("aadhar_image", file);
+        form.setValue("aadharImage", file);
         setAadharImagePreview(imageSrc);
         setShowAadhaarCamera(false);
       });
@@ -197,7 +201,7 @@ export default function UpdateProfile() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
-                          name="first_name"
+                          name="firstName"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-foreground">
@@ -216,7 +220,7 @@ export default function UpdateProfile() {
                         />
                         <FormField
                           control={form.control}
-                          name="last_name"
+                          name="lastName"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-foreground">
@@ -237,7 +241,74 @@ export default function UpdateProfile() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
-                          name="phone_number"
+                          name="aadharNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground">
+                                Aadhar Number
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="1234 5678 9012"
+                                  {...field}
+                                  className="bg-background"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dob"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground">
+                                Date of Birth
+                              </FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant={"outline"}
+                                      className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, "PPP")
+                                      ) : (
+                                        <span>Pick a date</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    mode="single"
+                                    captionLayout="dropdown-buttons"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    fromYear={1960}
+                                    toYear={new Date().getFullYear()}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="phoneNumber"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-foreground">
@@ -276,7 +347,7 @@ export default function UpdateProfile() {
                       </div>
                       <FormField
                         control={form.control}
-                        name="profile_image"
+                        name="profileImage"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className={"text-foreground"}>
@@ -554,7 +625,7 @@ export default function UpdateProfile() {
                       </div>
                       <FormField
                         control={form.control}
-                        name="aadhar_image"
+                        name="aadharImage"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className={"text-foreground"}>
@@ -604,7 +675,7 @@ export default function UpdateProfile() {
                                             field.onChange(file);
                                             const reader = new FileReader();
                                             reader.onloadend = () => {
-                                              setImagePreview(
+                                              setAadharImagePreview(
                                                 reader.result as string
                                               );
                                             };

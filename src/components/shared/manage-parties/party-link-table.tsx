@@ -14,8 +14,9 @@ import { copyToClipboard } from "@/utils/copy_to_clipboard";
 import { formatDate } from "@/utils/formatDate";
 
 const getLinkStatusBadge = (status: string) => {
+  console.log("status", status);
   switch (status) {
-    case "unused":
+    case "active":
       return (
         <Badge
           variant="outline"
@@ -47,28 +48,6 @@ const getLinkStatusBadge = (status: string) => {
   }
 };
 
-type Party = {
-  id: string;
-  name: string;
-  symbol: string;
-  abbreviation: string;
-  logo: string;
-  description: string;
-  contact_email: string;
-  contact_phone: string;
-  website: string;
-  leader_name: string;
-  leader_wallet_address: string;
-  leader_email: string;
-  verify_token: null | string;
-  token_url: null | string;
-  token_expiry: null | string;
-  candidate_count: number;
-  created_at: string;
-  status: string;
-  link_status: string;
-};
-
 const PartyLinkTable = ({ party_data }: { party_data: Party[] }) => {
   return (
     <Table>
@@ -83,69 +62,74 @@ const PartyLinkTable = ({ party_data }: { party_data: Party[] }) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {party_data.map((link) => (
-          <TableRow key={link.id}>
-            <TableCell>
-              <p className="font-medium">{link.name}</p>
-            </TableCell>
-            <TableCell>
-              <span className="text-2xl">{link.symbol}</span>
-            </TableCell>
-            <TableCell>
-              <p>{link.leader_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {link.leader_email}
-              </p>
-            </TableCell>
-            <TableCell>
-              {link.token_expiry
-                ? formatDate(new Date(link.token_expiry))
-                : "-"}
-            </TableCell>
-            <TableCell>{getLinkStatusBadge(link.link_status)}</TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                {link.link_status === "unused" && (
-                  <>
+        {party_data.map((link) => {
+          const url = `${window.location.origin}/party/verify/?walletAddress=${link.leader_wallet_address}&token=${link.tokens[0].token}`;
+          return (
+            <TableRow key={link.id}>
+              <TableCell>
+                <p className="font-medium">{link.name}</p>
+              </TableCell>
+              <TableCell>
+                <span className="text-2xl">{link.symbol}</span>
+              </TableCell>
+              <TableCell>
+                <p>{link.leader_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {link.leader_email}
+                </p>
+              </TableCell>
+              <TableCell>
+                {link.tokens[0].expiryTime
+                  ? formatDate(new Date(link.tokens[0].expiryTime))
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {getLinkStatusBadge(link.tokens[0].status.toLowerCase())}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {link.tokens[0].status === "ACTIVE" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          copyToClipboard(url);
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-1" /> Copy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:text-destructive/80"
+                        //   onClick={() => handleDeleteLink(link.id)}
+                      >
+                        <Trash className="w-4 h-4 mr-1" /> Delete
+                      </Button>
+                    </>
+                  )}
+                  {link.tokens[0].status === "EXPIRED" && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        copyToClipboard(link.token_url || "");
+                        // Regenerate link logic
+                        //   toast({
+                        //     title: "Link regenerated",
+                        //     description:
+                        //       "A new link has been generated with a fresh expiry date.",
+                        //   });
                       }}
                     >
-                      <Copy className="w-4 h-4 mr-1" /> Copy
+                      <RefreshCcw className="w-4 h-4 mr-1" /> Regenerate
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive/80"
-                      //   onClick={() => handleDeleteLink(link.id)}
-                    >
-                      <Trash className="w-4 h-4 mr-1" /> Delete
-                    </Button>
-                  </>
-                )}
-                {link.link_status === "expired" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Regenerate link logic
-                      //   toast({
-                      //     title: "Link regenerated",
-                      //     description:
-                      //       "A new link has been generated with a fresh expiry date.",
-                      //   });
-                    }}
-                  >
-                    <RefreshCcw className="w-4 h-4 mr-1" /> Regenerate
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

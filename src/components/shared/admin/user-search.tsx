@@ -9,20 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { useSearchUser } from "@/hooks/use-search-user";
 import { getStatusBadge } from "@/utils/status-badge";
 
-type User = {
-  id: string;
-  wallet_address: string;
-  status: string;
-  role: string;
-  UserDetails: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number: string;
-    profile_image: string;
-  }[];
-};
-
 type UserSearchProps = {
   selectedUser: User | null;
   onUserSelect: (user: User) => void;
@@ -44,7 +30,7 @@ const UserSearch: React.FC<UserSearchProps> = ({
     setHasSearched(true);
     searchUser.mutate(
       {
-        wallet_address: searchTerm.trim(),
+        walletAddress: searchTerm.trim(),
         status: "approved",
         role: "user",
       },
@@ -98,8 +84,6 @@ const UserSearch: React.FC<UserSearchProps> = ({
             Select a user to be the party leader:
           </p>
           {results.map((user) => {
-            const details = user.UserDetails[0];
-
             return (
               <Card
                 key={user.id}
@@ -111,24 +95,23 @@ const UserSearch: React.FC<UserSearchProps> = ({
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage
-                      src={details?.profile_image || "/placeholder.svg"}
-                      alt={details?.first_name || "User"}
+                      src={user.profileImage || "/placeholder.svg"}
+                      alt={user.firstName || "User"}
                     />
                     <AvatarFallback>
-                      {details?.first_name?.charAt(0) || "U"}
+                      {user.firstName.charAt(0) || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
-                      {details?.first_name || "Unknown"}{" "}
-                      {details?.last_name || ""}
+                      {user.firstName} {user.lastName}
                       {getStatusBadge(user.status)}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
-                      {details?.email || "No email"}
+                      {user.email || "No email"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {user.wallet_address}
+                      {user.walletAddress}
                     </p>
                   </div>
                   <Button size="sm" variant="outline" type="button">
@@ -152,27 +135,23 @@ const UserSearch: React.FC<UserSearchProps> = ({
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage
-                src={
-                  selectedUser.UserDetails[0].profile_image ||
-                  "/placeholder.svg"
-                }
-                alt={selectedUser.UserDetails[0].first_name}
+                src={selectedUser.profileImage || "/placeholder.svg"}
+                alt={selectedUser.firstName}
               />
               <AvatarFallback>
-                {selectedUser.UserDetails[0].first_name.charAt(0)}
+                {selectedUser.firstName.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <p className="font-medium">
-                {selectedUser.UserDetails[0].first_name}{" "}
-                {selectedUser.UserDetails[0].last_name}
+                {selectedUser.firstName} {selectedUser.lastName}
                 {getStatusBadge(selectedUser.status)}
               </p>
               <p className="text-sm text-muted-foreground">
-                {selectedUser.UserDetails[0].email}
+                {selectedUser.email}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {selectedUser.wallet_address}
+                {selectedUser.walletAddress}
               </p>
             </div>
             <Badge className="bg-green-500 text-white">Selected</Badge>

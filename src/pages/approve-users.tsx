@@ -44,6 +44,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getStatusBadge } from "@/utils/status-badge";
 import { UserDetailsDialog } from "@/components/shared/admin/approve-users/users-with-dialog";
+import { handleAxiosError } from "@/utils/errorHandler";
 
 type Location = {
   state_name: string;
@@ -54,17 +55,19 @@ type Location = {
 
 type User = {
   id: string;
-  wallet_address: string;
-  status: "pending" | "approved" | "rejected";
-  first_name: string;
-  last_name: string;
+  walletAddress: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  firstName: string;
+  lastName: string;
   email: string;
-  phone_number: string;
-  profile_image: string;
-  aadhar_image: string;
+  phoneNumber: string;
+  profileImage: string;
+  aadharImage: string;
+  aadharNumber: string;
+  dob: string;
   location: Location[];
-  created_at: string;
-  submitted_at: string;
+  createdAt: string;
+  submittedAt: string;
 };
 
 const types = {
@@ -83,13 +86,13 @@ const REJECTION_REASONS = [
 ];
 
 const REJECTION_FIELD_BUTTONS = [
-  { label: "Profile Image", value: "profile_image" },
-  { label: "Aadhaar Image", value: "aadhar_image" },
-  { label: "First Name", value: "first_name" },
-  { label: "Last Name", value: "last_name" },
-  { label: "Phone Number", value: "phone_number" },
+  { label: "Profile Image", value: "profileImage" },
+  { label: "Aadhaar Image", value: "aadharImage" },
+  { label: "First Name", value: "firstName" },
+  { label: "Last Name", value: "lastName" },
+  { label: "Phone Number", value: "phoneNumber" },
   { label: "Email", value: "email" },
-  { label: "Address", value: "update_location" },
+  { label: "Address", value: "updateLocation" },
 ];
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
@@ -119,22 +122,22 @@ export default function ApproveUsersPage() {
   } = usePendingUsers({
     page: Number(page),
     limit: 10,
-    filter: { status: status.toLowerCase() },
-    sortBy: "created_at:desc",
-    populate: "UserDetails,UserLocation",
+    filter: { status: status.toUpperCase() },
+    sortBy: "createdAt:desc",
+    populate: "userDetails,userLocation",
   });
 
-  const approve_user = useApproveUserMutation();
-  const reject_user = useRejectUserMutation();
+  const approveUser = useApproveUserMutation();
+  const rejectUser = useRejectUserMutation();
 
   const filteredUsers = useMemo(() => {
     if (isLoading || !users) return [];
     return users.filter(
       (user: User) =>
-        user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.wallet_address.toLowerCase().includes(searchTerm.toLowerCase())
+        user.walletAddress.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [isLoading, users, searchTerm]);
 
@@ -149,7 +152,7 @@ export default function ApproveUsersPage() {
   };
 
   const confirmApprove = () => {
-    approve_user.mutate(
+    approveUser.mutate(
       {
         userId: selectedUser!.id,
       },
@@ -159,10 +162,7 @@ export default function ApproveUsersPage() {
             setApproveDialogOpen(false);
           }, 10000);
         },
-        onError: (error) => {
-          console.error("error", error);
-          toast.error("Error while approving user");
-        },
+        onError: (error) => handleAxiosError(error),
       }
     );
   };
@@ -186,12 +186,12 @@ export default function ApproveUsersPage() {
       return;
     }
 
-    reject_user.mutate(
+    rejectUser.mutate(
       {
         userId: selectedUser!.id,
         reason:
           rejectedReason.trim() === "other" ? customReason : rejectedReason,
-        rejected_fields: rejectionFields,
+        rejectedFields: rejectionFields,
       },
       {
         onSuccess: () => {
@@ -199,10 +199,7 @@ export default function ApproveUsersPage() {
             setRejectDialogOpen(false);
           }, 10000);
         },
-        onError: (error) => {
-          console.error("error", error);
-          toast.error("Error while rejecting user");
-        },
+        onError: (error) => handleAxiosError(error),
       }
     );
 
@@ -298,10 +295,10 @@ export default function ApproveUsersPage() {
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-shrink-0">
                           <Avatar className="h-16 w-16">
-                            {user.profile_image ? (
+                            {user.profileImage ? (
                               <AvatarImage
-                                src={user.profile_image}
-                                alt={user.first_name}
+                                src={user.profileImage}
+                                alt={user.firstName}
                               />
                             ) : (
                               <AvatarFallback>
@@ -315,10 +312,10 @@ export default function ApproveUsersPage() {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
                               <h3 className="font-medium text-lg">
-                                {user.first_name} {user.last_name}
+                                {user.firstName} {user.lastName}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                {user.wallet_address}
+                                {user.walletAddress}
                               </p>
                             </div>
                             <div className="mt-2 md:mt-0">
@@ -330,7 +327,7 @@ export default function ApproveUsersPage() {
                             <InfoRow label="Email" value={user.email} />
                             <InfoRow
                               label="Phone"
-                              value={`+91 ${user.phone_number}`}
+                              value={`+91 ${user.phoneNumber}`}
                             />
                             {location && (
                               <InfoRow
@@ -352,7 +349,7 @@ export default function ApproveUsersPage() {
                               View Details
                             </Button>
 
-                            {user.status === "pending" && (
+                            {user.status === "PENDING" && (
                               <>
                                 <Button
                                   variant="outline"
@@ -390,19 +387,19 @@ export default function ApproveUsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Approve User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to approve {selectedUser?.first_name}{" "}
-              {selectedUser?.last_name}? This will allow them to participate in
+              Are you sure you want to approve {selectedUser?.firstName}{" "}
+              {selectedUser?.lastName}? This will allow them to participate in
               elections.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={approve_user.isPending}>
+            <AlertDialogCancel disabled={approveUser.isPending}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmApprove}
               className="bg-green-600 hover:bg-green-700"
-              disabled={approve_user.isPending}
+              disabled={approveUser.isPending}
             >
               <Shield className="h-4 w-4 mr-0" /> Approve
             </AlertDialogAction>
@@ -417,8 +414,8 @@ export default function ApproveUsersPage() {
               Reject User
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Please provide details for rejecting {selectedUser?.first_name}{" "}
-              {selectedUser?.last_name}'s application.
+              Please provide details for rejecting {selectedUser?.firstName}{" "}
+              {selectedUser?.lastName}'s application.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

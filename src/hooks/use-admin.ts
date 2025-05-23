@@ -42,7 +42,7 @@ export const useApproveUserMutation = () => {
   return useMutation({
     mutationFn: async ({ userId }: { userId: string }) => {
       const res = await api.put(`${API}/api/v1/admin/approve_user/`, {
-        user_id: userId,
+        userId: userId,
       });
       return res.data.message;
     },
@@ -58,16 +58,16 @@ export const useRejectUserMutation = () => {
     mutationFn: async ({
       userId,
       reason,
-      rejected_fields,
+      rejectedFields,
     }: {
       userId: string;
       reason: string;
-      rejected_fields: string[];
+      rejectedFields: string[];
     }) => {
       const res = await api.put(`${API}/api/v1/admin/reject_user/`, {
-        user_id: userId,
+        userId: userId,
         reason: reason,
-        rejected_fields: rejected_fields,
+        rejectedFields: rejectedFields,
       });
       return res.data.message;
     },

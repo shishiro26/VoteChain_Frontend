@@ -16,7 +16,7 @@ import {
 
 export const SessionExpiredAlert = () => {
   const navigate = useNavigate();
-  const { wallet, connectThroughAuth } = useWallet();
+  const { walletAddress, connectThroughAuth } = useWallet();
   const [isOpen, setIsOpen] = React.useState(false);
   const resolverRef = React.useRef<() => void | null>(null);
   const { disconnectWallet } = useWallet();
@@ -32,8 +32,8 @@ export const SessionExpiredAlert = () => {
   }, []);
 
   const handleConfirm = () => {
-    if (wallet) {
-      connectThroughAuth(wallet);
+    if (walletAddress) {
+      connectThroughAuth(walletAddress);
       setIsOpen(false);
       if (resolverRef.current) resolverRef.current();
     }

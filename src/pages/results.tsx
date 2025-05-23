@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useWallet } from "@/store/useWallet";
 import {
   BarChart,
   Bar,
@@ -40,7 +39,6 @@ const pieData = [
 const COLORS = ["#1e70eb", "#34d399", "#fbbf24", "#f87171"];
 
 export default function ResultsPage() {
-  const { wallet } = useWallet();
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-center">Election Results</h1>

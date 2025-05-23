@@ -11,19 +11,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Users } from "lucide-react";
 import NoAffiliationCard from "./no-affiliation-card";
+import { useWallet } from "@/store/useWallet";
+import { formatDate } from "@/utils/formatDate";
 
-const userData = {
-  partyAffiliation: {
-    partyName: "Progressive Party",
-    partySymbol: "PP",
-    partyLogo: "/path/to/logo.png",
-    membershipId: "123456",
-    joinDate: "2022-01-01",
-    role: "Leader",
-  },
+type Party = {
+  id: string;
+  name: string;
+  symbol: string;
+  isLeader: boolean;
+  logo: string;
+  pending_count: number | null;
+  approved_count: number | null;
+  rejected_count: number | null;
+  joinDate: string;
 };
 
-const PartyStats = () => (
+const PartyStats = ({ party }: { party: Party }) => (
   <div className="mt-8 p-4 bg-muted rounded-lg">
     <h4 className="font-medium mb-2 flex items-center gap-2">
       <Users className="h-4 w-4" />
@@ -32,15 +35,19 @@ const PartyStats = () => (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="p-3 bg-background rounded-md">
         <p className="text-sm text-muted-foreground">Total Members</p>
-        <p className="text-xl font-bold">42</p>
+        <p className="text-xl font-bold">
+          {(party.pending_count || 0) +
+            (party.approved_count || 0) +
+            (party.rejected_count || 0)}
+        </p>
       </div>
       <div className="p-3 bg-background rounded-md">
         <p className="text-sm text-muted-foreground">Pending Requests</p>
-        <p className="text-xl font-bold">7</p>
+        <p className="text-xl font-bold">{party.pending_count || 0}</p>
       </div>
       <div className="p-3 bg-background rounded-md">
         <p className="text-sm text-muted-foreground">Active Candidates</p>
-        <p className="text-xl font-bold">12</p>
+        <p className="text-xl font-bold">{party.approved_count}</p>
       </div>
       <div className="p-3 bg-background rounded-md">
         <p className="text-sm text-muted-foreground">Elections Won</p>
@@ -52,40 +59,35 @@ const PartyStats = () => (
 
 const UserParty = () => {
   const navigate = useNavigate();
-  const { partyAffiliation } = userData;
+  const { profile } = useWallet();
+
+  const party = profile?.party;
+  console.log("Party", party);
 
   const renderActionButtons = () => {
-    if (!partyAffiliation) return null;
+    if (!party) return null;
 
-    return partyAffiliation.role === "Leader" ? (
+    return party.isLeader ? (
       <>
-        <Button
-          onClick={() =>
-            navigate(`/parties/${partyAffiliation.membershipId}/manage`)
-          }
-        >
+        <Button onClick={() => navigate(`/parties/${party.id}/manage`)}>
           Manage Party
         </Button>
         <Button
           variant="outline"
-          onClick={() =>
-            navigate(`/parties/${partyAffiliation.membershipId}/manage-members`)
-          }
+          onClick={() => navigate(`/parties/${party.id}/manage-members`)}
         >
           Manage Members
         </Button>
       </>
     ) : (
-      <Button
-        onClick={() => navigate(`/parties/${partyAffiliation.membershipId}`)}
-      >
+      <Button onClick={() => navigate(`/parties/${party.id}`)}>
         View Party Details
       </Button>
     );
   };
 
-  if (!partyAffiliation) {
-    return <NoAffiliationCard link="/parties" />;
+  if (!party) {
+    return <NoAffiliationCard link="/browse/parties" />;
   }
 
   return (
@@ -98,9 +100,14 @@ const UserParty = () => {
               Your political party membership details
             </CardDescription>
           </div>
-          {partyAffiliation.role === "Leader" && (
+          {party.isLeader && (
             <Badge className="bg-primary/20 text-primary hover:bg-primary/30">
               Party Leader
+            </Badge>
+          )}
+          {party.status === "PENDING" && (
+            <Badge className="bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30">
+              Membership Pending
             </Badge>
           )}
         </div>
@@ -112,12 +119,12 @@ const UserParty = () => {
             <div className="w-32 h-32 rounded-lg border overflow-hidden flex items-center justify-center bg-muted">
               <div className="relative w-full h-full">
                 <img
-                  src={partyAffiliation.partyLogo || "/placeholder.svg"}
-                  alt={partyAffiliation.partyName}
+                  src={party.logo || "/placeholder.svg"}
+                  alt={party.name}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-0 right-0 bg-background/80 p-1 rounded-tl-md text-2xl">
-                  {partyAffiliation.partySymbol}
+                  {party.symbol}
                 </div>
               </div>
             </div>
@@ -126,8 +133,8 @@ const UserParty = () => {
           <div className="flex-grow space-y-4">
             <div>
               <h3 className="text-xl font-bold flex items-center gap-2">
-                {partyAffiliation.partyName}
-                <span className="text-2xl">{partyAffiliation.partySymbol}</span>
+                {party.name}
+                <span className="text-2xl">{party.symbol}</span>
               </h3>
               <p className="text-muted-foreground">
                 A progressive party focused on democratic values and social
@@ -138,15 +145,21 @@ const UserParty = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Membership ID</p>
-                <p className="font-medium">{partyAffiliation.membershipId}</p>
+                <p className="font-medium">
+                  {party.id.slice(0, 6)}...{party.id.slice(-4)}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Join Date</p>
-                <p className="font-medium">{partyAffiliation.joinDate}</p>
+                <p className="font-medium">
+                  {formatDate(new Date(party.joinDate))}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Role</p>
-                <p className="font-medium">{partyAffiliation.role}</p>
+                <p className="font-medium">
+                  {party.isLeader ? "Leader" : "Member"}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
@@ -171,7 +184,7 @@ const UserParty = () => {
           </div>
         </div>
 
-        {partyAffiliation.role === "Leader" && <PartyStats />}
+        {party.isLeader && <PartyStats party={party} />}
       </CardContent>
     </Card>
   );

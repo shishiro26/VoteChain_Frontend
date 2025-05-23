@@ -28,18 +28,20 @@ import { Link, useLocation, useNavigate } from "react-router";
 
 export default function Header() {
   const {
-    wallet,
+    walletAddress,
     connecting,
     connectWallet,
     disconnectWallet,
-    is_profile_complete,
+    isProfileComplete,
+    profile,
   } = useWallet();
   const { checkIsAdmin: isAdmin } = useAuth();
-
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  console.log("profile", profile);
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -81,9 +83,7 @@ export default function Header() {
           ))}
         </div>
 
-        {/* Right side actions */}
         <div className="flex items-center space-x-4">
-          {/* Admin Dashboard Link (if admin) */}
           {isAdmin && (
             <Link
               to="/admin"
@@ -95,12 +95,15 @@ export default function Header() {
           )}
 
           {/* Wallet Connection */}
-          {wallet ? (
+          {walletAddress ? (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger
+                asChild
+                disabled={profile === null || profile === undefined}
+              >
                 <Button variant="outline" className="hidden md:flex">
                   <User className="h-4 w-4 mr-2" />
-                  {truncateAddress(wallet)}
+                  {truncateAddress(walletAddress)}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -108,7 +111,10 @@ export default function Header() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">
+                  <Link
+                    to={`/profile/${walletAddress}`}
+                    className="cursor-pointer"
+                  >
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Link>
@@ -202,11 +208,11 @@ export default function Header() {
             </div>
 
             {/* Wallet connection */}
-            {wallet ? (
+            {walletAddress ? (
               <div className="space-y-3">
                 <div className="flex items-center text-sm font-medium">
                   <User className="h-4 w-4 mr-2" />
-                  {truncateAddress(wallet)}
+                  {truncateAddress(walletAddress)}
                 </div>
                 <div className="flex flex-col space-y-2">
                   <Link
@@ -242,7 +248,7 @@ export default function Header() {
         </div>
       )}
 
-      {wallet && !is_profile_complete && (
+      {walletAddress && !isProfileComplete && (
         <div className="bg-amber-500/90 text-white py-2 px-4 text-center">
           <div className="container mx-auto flex flex-wrap items-center justify-center gap-2">
             <AlertTriangle className="h-4 w-4" />

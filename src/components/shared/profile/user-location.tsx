@@ -7,16 +7,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, MapPin, Building } from "lucide-react";
-
-const userData = {
-  partyAffiliation: {
-    constituency: "Downtown",
-    state: "California",
-  },
-};
+import { useWallet } from "@/store/useWallet";
 
 const UserLocation = () => {
-  const { partyAffiliation } = userData;
+  const { profile } = useWallet();
   return (
     <Card>
       <CardHeader>
@@ -51,7 +45,7 @@ const UserLocation = () => {
                 <MapPin className="h-4 w-4 text-primary" />
                 <p className="font-medium">Registered Constituency</p>
               </div>
-              <p>{partyAffiliation.constituency}</p>
+              <p>{profile?.location.constituency}</p>
             </div>
 
             <div className="p-4 border rounded-lg">
@@ -59,7 +53,7 @@ const UserLocation = () => {
                 <Building className="h-4 w-4 text-primary" />
                 <p className="font-medium">Registered State</p>
               </div>
-              <p>{partyAffiliation.state}</p>
+              <p>{profile?.location.state}</p>
             </div>
           </div>
         </div>

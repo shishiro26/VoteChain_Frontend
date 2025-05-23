@@ -26,30 +26,11 @@ import {
   Calendar,
   FileText,
   ExternalLink,
+  Instagram,
+  Facebook,
+  Twitter,
 } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
-
-type Party = {
-  id: string;
-  name: string;
-  symbol: string;
-  abbreviation: string;
-  logo: string;
-  description: string;
-  contact_email: string;
-  contact_phone: string;
-  website: string;
-  leader_name: string;
-  leader_wallet_address: string;
-  leader_email: string;
-  verify_token: null | string;
-  token_url: null | string;
-  token_expiry: null | string;
-  candidate_count: number;
-  created_at: string;
-  status: string;
-  link_status: string;
-};
 
 interface ViewPartyDialogProps {
   party?: Party | null;
@@ -57,7 +38,6 @@ interface ViewPartyDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// const ideology = ["Progressivism", "Social Democracy"];
 const electionResults = [
   {
     year: 2020,
@@ -83,6 +63,7 @@ export function ViewPartyDialog({
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!party) return null;
+  const status = party.logo ? "active" : "pending";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,14 +85,14 @@ export function ViewPartyDialog({
                 <Badge
                   variant="outline"
                   className={
-                    party.status === "active"
+                    status === "active"
                       ? "bg-green-100 text-green-800 hover:bg-green-100 border-green-200"
-                      : party.status === "pending"
+                      : status === "pending"
                       ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-200"
                       : "bg-red-100 text-red-800 hover:bg-red-100 border-red-200"
                   }
                 >
-                  {party.status.charAt(0).toUpperCase() + party.status.slice(1)}
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
                 </Badge>
               </DialogDescription>
             </div>
@@ -131,15 +112,20 @@ export function ViewPartyDialog({
               <Card>
                 <CardHeader>
                   <CardTitle>Party Information</CardTitle>
+                  <CardDescription>
+                    Basic details about the party
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-2">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">
                       Founded
                     </h4>
                     <p className="flex items-center gap-2 mt-1">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {formatDate(new Date(party.created_at))}
+                      {party.founded_on
+                        ? formatDate(new Date(party.founded_on))
+                        : "Not specified"}
                     </p>
                   </div>
 
@@ -158,8 +144,17 @@ export function ViewPartyDialog({
                       Email
                     </h4>
                     <p className="flex items-center gap-2 mt-1">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <Mail className="h-4 w-4 text-muted-foreground" />
                       {party.contact_email}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">
+                      Headquarters
+                    </h4>
+                    <p className="flex items-center gap-2 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      {party.headquarters}
                     </p>
                   </div>
 
@@ -182,7 +177,7 @@ export function ViewPartyDialog({
                     </h4>
                     <p className="flex items-center gap-2 mt-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      {party.candidate_count.toLocaleString()}
+                      {party.partyMembersCount.toLocaleString()}
                     </p>
                   </div>
                 </CardContent>
@@ -191,6 +186,9 @@ export function ViewPartyDialog({
               <Card>
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
+                  <CardDescription>
+                    Contact details for the party
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <>
@@ -235,6 +233,43 @@ export function ViewPartyDialog({
                       +91 {party.contact_phone}
                     </a>
                   </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">
+                      Social Media
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      {party.social_urls.twitter && (
+                        <a
+                          href={party.social_urls.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          <Twitter className="h-4 w-4" />
+                        </a>
+                      )}
+                      {party.social_urls.facebook && (
+                        <a
+                          href={party.social_urls.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          <Facebook className="h-4 w-4" />
+                        </a>
+                      )}
+                      {party.social_urls.instagram && (
+                        <a
+                          href={party.social_urls.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          <Instagram className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -256,7 +291,7 @@ export function ViewPartyDialog({
               <CardHeader>
                 <CardTitle>Party Members</CardTitle>
                 <CardDescription>
-                  Total members: {party.candidate_count.toLocaleString()}
+                  Total members: {party.partyMembersCount.toLocaleString()}
                 </CardDescription>
               </CardHeader>
               <CardContent>

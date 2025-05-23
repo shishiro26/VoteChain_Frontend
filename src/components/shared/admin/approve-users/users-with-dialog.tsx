@@ -40,17 +40,19 @@ type Location = {
 
 type User = {
   id: string;
-  wallet_address: string;
-  status: "pending" | "approved" | "rejected";
-  first_name: string;
-  last_name: string;
+  walletAddress: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  firstName: string;
+  lastName: string;
   email: string;
-  phone_number: string;
-  profile_image: string;
-  aadhar_image: string;
+  phoneNumber: string;
+  profileImage: string;
+  aadharImage: string;
   location: Location[];
-  created_at: string;
-  submitted_at: string;
+  createdAt: string;
+  submittedAt: string;
+  aadharNumber: string;
+  dob: string;
 };
 
 interface UserDetailsDialogProps {
@@ -66,8 +68,6 @@ export function UserDetailsDialog({
 }: UserDetailsDialogProps) {
   const [activeTab, setActiveTab] = useState("details");
   const [fullImageView, setFullImageView] = useState<string | null>(null);
-  console.log("user", user);
-  console.log("submitted_at", user?.submitted_at);
   if (!user) return null;
 
   return (
@@ -78,22 +78,22 @@ export function UserDetailsDialog({
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage
-                  src={user.profile_image || "/placeholder.svg"}
-                  alt={user.first_name}
+                  src={user.profileImage || "/placeholder.svg"}
+                  alt={user.firstName}
                 />
-                <AvatarFallback>{user.first_name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{user.firstName.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
                 <DialogTitle className="text-2xl">
-                  {user.first_name} {user.last_name}
+                  {user.firstName} {user.lastName}
                 </DialogTitle>
                 <DialogDescription className="flex items-center gap-2 mt-1">
                   <Badge
                     variant="outline"
                     className={
-                      user.status === "approved"
+                      user.status === "APPROVED"
                         ? "bg-green-100 text-green-800 hover:bg-green-100 border-green-200"
-                        : user.status === "pending"
+                        : user.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-200"
                         : "bg-red-100 text-red-800 hover:bg-red-100 border-red-200"
                     }
@@ -102,15 +102,15 @@ export function UserDetailsDialog({
                   </Badge>
                   <span>•</span>
                   <span>
-                    Registered on {formatDate(new Date(user.created_at))}
+                    Registered on {formatDate(new Date(user.createdAt))}
                   </span>
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid grid-cols-3 mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
+            <TabsList className="grid grid-cols-3 mb-2">
               <TabsTrigger value="details">Personal Details</TabsTrigger>
               <TabsTrigger value="documents">ID Verification</TabsTrigger>
               <TabsTrigger value="activity">Activity Log</TabsTrigger>
@@ -121,8 +121,32 @@ export function UserDetailsDialog({
                 <Card>
                   <CardHeader>
                     <CardTitle>Contact Information</CardTitle>
+                    <CardDescription>
+                      Basic information about the user
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">
+                          Age
+                        </h4>
+                        <p className="mt-1">
+                          {new Date().getFullYear() -
+                            new Date(user.dob).getFullYear()}{" "}
+                          years
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">
+                          Phone
+                        </h4>
+                        <p className="flex items-center gap-2 mt-1">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          +91 {user.phoneNumber}
+                        </p>
+                      </div>
+                    </div>
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground">
                         Email
@@ -133,15 +157,6 @@ export function UserDetailsDialog({
                       </p>
                     </div>
 
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground">
-                        Phone
-                      </h4>
-                      <p className="flex items-center gap-2 mt-1">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        +91 {user.phone_number}
-                      </p>
-                    </div>
                     {user.location.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-muted-foreground">
@@ -182,7 +197,7 @@ export function UserDetailsDialog({
                     <h4 className="text-sm font-medium text-muted-foreground">
                       ID Number
                     </h4>
-                    <p className="mt-1">{user.phone_number}</p>
+                    <p className="mt-1">{user.aadharNumber}</p>
                   </div>
 
                   <Separator className="my-4" />
@@ -194,12 +209,12 @@ export function UserDetailsDialog({
                       className="bg-muted rounded-md overflow-hidden relative group"
                     >
                       <img
-                        src={user.profile_image || "/placeholder.svg"}
-                        alt={`${user.first_name}'s ID proof`}
+                        src={user.aadharImage || "/placeholder.svg"}
+                        alt={`${user.aadharNumber}'s ID proof`}
                         className="object-cover w-full h-full"
                       />
                       <button
-                        onClick={() => setFullImageView(user.profile_image)}
+                        onClick={() => setFullImageView(user.aadharImage)}
                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                       >
                         <Maximize className="h-6 w-6" />
@@ -231,7 +246,7 @@ export function UserDetailsDialog({
                           User registered and created their profile
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDate(new Date(user.created_at))}
+                          {formatDate(new Date(user.createdAt))}
                         </p>
                       </div>
                     </div>
@@ -246,12 +261,12 @@ export function UserDetailsDialog({
                           User submitted documents for verification on
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDate(new Date(user?.submitted_at))}{" "}
+                          {formatDate(new Date(user?.submittedAt))}{" "}
                         </p>
                       </div>
                     </div>
 
-                    {user.status === "approved" && (
+                    {user.status === "APPROVED" && (
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
                           <Check className="h-5 w-5 text-green-600" />
@@ -262,13 +277,13 @@ export function UserDetailsDialog({
                             Admin approved user verification on
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDate(new Date(user?.submitted_at))}
+                            {formatDate(new Date(user?.submittedAt))}
                           </p>
                         </div>
                       </div>
                     )}
 
-                    {user.status === "rejected" && (
+                    {user.status === "REJECTED" && (
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
                           <X className="h-5 w-5 text-red-600" />

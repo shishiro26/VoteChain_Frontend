@@ -333,7 +333,7 @@ const SAMPLE_CANDIDATES: Record<string, Candidate[]> = {
 };
 
 export default function ElectionDetailPage() {
-  const { wallet, is_profile_complete } = useWallet();
+  const { walletAddress, isProfileComplete } = useWallet();
   const navigate = useNavigate();
   const location = useLocation();
   //   const { toast } = useToast()
@@ -346,12 +346,12 @@ export default function ElectionDetailPage() {
   const electionId = location.pathname.split("/").pop() || "";
 
   useEffect(() => {
-    if (!wallet) {
+    if (!walletAddress) {
       navigate("/");
       return;
     }
 
-    if (!is_profile_complete) {
+    if (!isProfileComplete) {
       navigate("/update-profile");
       return;
     }
@@ -363,13 +363,13 @@ export default function ElectionDetailPage() {
     }
 
     // Check if user has already voted
-    if (electionData.voters?.includes(wallet)) {
+    if (electionData.voters?.includes(walletAddress)) {
       setHasVoted(true);
     }
 
     setElection(electionData);
     setCandidates(SAMPLE_CANDIDATES[electionId] || []);
-  }, [wallet, is_profile_complete, electionId, navigate, toast]);
+  }, [walletAddress, isProfileComplete, electionId, navigate, toast]);
 
   const handleVote = async () => {
     if (!selectedCandidate) {
@@ -387,7 +387,7 @@ export default function ElectionDetailPage() {
     setTimeout(() => {
       // Update local state to reflect vote
       if (election) {
-        election.voters = [...(election.voters || []), wallet || ""];
+        election.voters = [...(election.voters || []), walletAddress || ""];
         election.total_votes += 1;
       }
 

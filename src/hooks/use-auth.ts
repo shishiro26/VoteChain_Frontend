@@ -2,15 +2,15 @@
 import { useWallet } from "../store/useWallet";
 
 export const useAuth = () => {
-  const { wallet, role } = useWallet();
+  const { walletAddress, role } = useWallet();
 
-  const isAuthenticated = !!wallet;
-  const checkIsAdmin = role === "admin";
-  const checkIsPartyLeader = role === "phead";
-  const checkIsCandidate = role === "candidate";
+  const isAuthenticated = !!walletAddress;
+  const checkIsAdmin = role === "ADMIN";
+  const checkIsPartyLeader = role === "PHEAD";
+  const checkIsCandidate = role === "CANDIDATE";
 
   return {
-    wallet,
+    walletAddress,
     role,
     isAuthenticated,
     checkIsAdmin,

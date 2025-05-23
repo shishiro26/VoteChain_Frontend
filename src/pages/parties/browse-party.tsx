@@ -17,6 +17,7 @@ import { useGetAllPartiesQuery } from "@/api";
 import { formatDate } from "@/utils/formatDate";
 import { Loader } from "@/components/ui/loader";
 import { getPartyStatusBadge } from "@/utils/status-badge";
+import UserParty from "@/components/shared/manage-parties/user-party";
 
 export default function PartiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,8 +38,8 @@ export default function PartiesPage() {
   const { data: partiesData, isLoading } = useGetAllPartiesQuery({
     page: Number(page),
     limit: 10,
-    sortBy: "created_at:desc",
-    populate: "details,Candidate,leader.UserDetails",
+    sortBy: "createdAt:desc",
+    populate: "details,partyMembers.user.userDetails,tokens",
   });
 
   const filteredParties = partiesData?.results ?? [];
@@ -117,11 +118,11 @@ export default function PartiesPage() {
                             {party.name}
                           </CardTitle>
                           <CardDescription>
-                            Founded {formatDate(new Date(party.created_at))}
+                            Founded {formatDate(new Date(party.founded_on))}
                           </CardDescription>
                         </div>
                       </div>
-                      {getPartyStatusBadge(party.status)}
+                      {getPartyStatusBadge(party.logo ? "active" : "pending")}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -130,7 +131,7 @@ export default function PartiesPage() {
                     </p>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Users className="w-4 h-4 mr-1" />{" "}
-                      {party.candidate_count.toLocaleString()} members
+                      {party.partyMembersCount.toLocaleString()} members
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/50 border-t pt-4">
@@ -140,7 +141,7 @@ export default function PartiesPage() {
                       onClick={() => {
                         navigate(`/parties/${party.id}`);
                       }}
-                      disabled={party.status !== "active"}
+                      disabled={party.logo ? false : true}
                     >
                       View Details
                     </Button>
@@ -160,80 +161,7 @@ export default function PartiesPage() {
         </TabsContent>
 
         <TabsContent value="my-parties">
-          {/* {userParties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userParties.map((party) => (
-                <Card key={party.id} className="overflow-hidden">
-                  <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={party.logo || "/placeholder.svg"}
-                          alt={`${party.name} logo`}
-                          className="w-12 h-12 rounded-full object-cover border"
-                        />
-                        <div>
-                          <CardTitle className="text-xl">
-                            {party.name}
-                          </CardTitle>
-                          <div className="mt-1">
-                            {getMembershipBadge(party.membershipStatus)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {party.description}
-                    </p>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <CalendarIcon className="w-4 h-4 mr-1" /> Joined on{" "}
-                      {new Date(party.joinedDate).toLocaleDateString()}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/50 border-t pt-4 flex justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate(`/parties/${party.id}`)}
-                    >
-                      View Party
-                    </Button>
-                    {party.membershipStatus === "leader" && (
-                      <Button
-                        onClick={() => navigate(`/parties/${party.id}/manage`)}
-                      >
-                        Manage Party
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>You haven't joined any parties yet</CardTitle>
-                <CardDescription>
-                  Browse available parties to join one
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Users className="w-16 h-16 text-muted-foreground mb-4" />
-                <p className="text-center text-muted-foreground mb-6">
-                  Joining a political party allows you to participate in
-                  internal elections and represent the party in national
-                  elections.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab("browse")}
-                >
-                  Browse Parties
-                </Button>
-              </CardContent>
-            </Card>
-          )} */}
+          <UserParty />
         </TabsContent>
       </Tabs>
     </div>
