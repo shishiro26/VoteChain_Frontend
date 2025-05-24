@@ -18,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, Mail, Wallet, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader } from "../../loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import { useApprovePartyMember, useRejectPartyMember } from "@/api";
 import { toast } from "sonner";
 

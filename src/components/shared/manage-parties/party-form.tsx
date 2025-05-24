@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useCreatePartyMutation } from "@/api";
 import { Loader } from "@/components/ui/loader";
 import { UserCheck } from "lucide-react";
-import UserSearch from "../admin/user-search";
+import UserSearch from "../admin/search/user-search";
 import { toast } from "sonner";
 
 const COMMON_SYMBOLS = [

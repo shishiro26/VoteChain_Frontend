@@ -64,22 +64,18 @@ export const createElectionSchema = z
       .string()
       .min(10, { message: "Title must be at least 10 characters long" })
       .max(100, { message: "Title must be at most 100 characters long" })
-      .nonempty({ message: "Title is required" })
       .refine((val) => /^[a-zA-Z0-9 ]+$/.test(val), {
         message: "Title can only contain letters, numbers, and spaces",
-      })
-      .transform((val) => val.replace(/\s+/g, "").toLowerCase()),
+      }),
 
     purpose: z
       .string()
       .min(10, { message: "Purpose must be at least 10 characters long" })
       .max(1000, { message: "Purpose must be at most 1000 characters long" })
-      .nonempty({ message: "Purpose is required" })
-      .refine((val) => /^[a-zA-Z0-9 -]+$/.test(val), {
+      .refine((val) => /^[a-zA-Z0-9 ,.-]+$/.test(val), {
         message:
-          "Purpose can only contain letters, numbers, spaces, and dashes",
-      })
-      .transform((val) => val.replace(/\s+/g, "").toLowerCase()),
+          "Purpose can only contain letters, numbers, spaces, commas, periods, and dashes",
+      }),
 
     startDate: z
       .string()

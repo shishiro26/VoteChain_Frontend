@@ -30,21 +30,29 @@ export function DateTimePicker({
   );
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
+  // Sync incoming prop → internal state
+  React.useEffect(() => {
+    const parsed = date ? new Date(date) : undefined;
+    if (
+      (parsed && !selectedDate) ||
+      (parsed && selectedDate && parsed.getTime() !== selectedDate.getTime()) ||
+      (!parsed && selectedDate)
+    ) {
+      setSelectedDate(parsed);
+    }
+  }, [date]);
+
+  // Sync internal state → external prop
   React.useEffect(() => {
     if (selectedDate) {
-      const isoString = selectedDate.toISOString();
-      if (isoString !== date) {
-        setDate(isoString);
+      const iso = selectedDate.toISOString();
+      if (iso !== date) {
+        setDate(iso);
       }
+    } else if (date) {
+      setDate(undefined);
     }
-  }, [date, selectedDate, setDate]);
-
-  React.useEffect(() => {
-    const formDate = date ? new Date(date) : undefined;
-    if (formDate?.toISOString() !== selectedDate?.toISOString()) {
-      setSelectedDate(formDate);
-    }
-  }, [date, selectedDate]);
+  }, [selectedDate]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -72,7 +80,7 @@ export function DateTimePicker({
     <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant={"outline"}
+          variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
             !selectedDate && "text-muted-foreground",

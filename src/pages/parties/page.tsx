@@ -21,7 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader } from "@/components/shared/loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import { Upload, Info, AlertTriangle, Calendar1Icon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";

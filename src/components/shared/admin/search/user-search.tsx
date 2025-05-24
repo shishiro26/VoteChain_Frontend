@@ -2,7 +2,7 @@ import React from "react";
 import { Search, Wallet, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/shared/loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -13,7 +13,7 @@ import { Search, UserPlus, Wallet } from "lucide-react";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { Loader } from "../loaders/loader";
+import { Loader } from "@/components/ui/loader";
 
 const party = {
   name: "Party Name",

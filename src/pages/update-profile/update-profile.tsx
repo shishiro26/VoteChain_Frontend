@@ -22,7 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader } from "@/components/shared/loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import {
   Select,
   SelectContent,

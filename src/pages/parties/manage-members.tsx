@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader } from "@/components/shared/loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import { ArrowLeft, Users, Clock, Calendar, MapPin, Globe } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation, useNavigate } from "react-router";

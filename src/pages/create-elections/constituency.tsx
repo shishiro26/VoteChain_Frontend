@@ -36,13 +36,15 @@ import {
   useStatesQuery,
 } from "@/hooks/use-location";
 import { DateTimePicker } from "@/components/shared/datetime-picker";
+import { useCreateElectionMutation } from "@/api";
+import { Loader } from "@/components/ui/loader";
 
 const ElectionTypeOptions = [
-  { value: "by_election", label: "By Election" },
-  { value: "lok_sabha", label: "Lok Sabha Election" },
-  { value: "vidhan_sabha", label: "Vidhan Sabha Election" },
-  { value: "municipal", label: "Municipal Election" },
-  { value: "panchayat", label: "Panchayat Election" },
+  { value: "BY_ELECTION", label: "By Election" },
+  { value: "LOK_SABHA", label: "Lok Sabha Election" },
+  { value: "VIDHAN_SABHA", label: "Vidhan Sabha Election" },
+  { value: "MUNICIPAL", label: "Municipal Election" },
+  { value: "PANCHAYAT", label: "Panchayat Election" },
 ];
 
 export default function CreateConstituencyElectionPage() {
@@ -53,9 +55,8 @@ export default function CreateConstituencyElectionPage() {
     defaultValues: {
       title: "",
       purpose: "",
-      start_date: "",
-      end_date: "",
-      election_type: "lok_sabha",
+      startDate: "",
+      endDate: "",
       state: { id: "", name: "" },
       district: { id: "", name: "" },
       mandal: { id: "", name: "" },
@@ -77,20 +78,24 @@ export default function CreateConstituencyElectionPage() {
   const { data: constituencies = [], isLoading: constituencyLoader } =
     useConstituenciesQuery(selectedMandal.id);
 
-  const onSubmit = async (values: z.infer<typeof createElectionSchema>) => {
-    console.log("values", values);
+  const createElection = useCreateElectionMutation();
 
+  const onSubmit = async (values: z.infer<typeof createElectionSchema>) => {
+    console.log("Form values:", values);
     const payload = {
       title: values.title,
       purpose: values.purpose,
-      start_date: new Date(values.start_date).toISOString(),
-      end_date: new Date(values.end_date).toISOString(),
-      constituency_id: values.constituency.id,
-      election_type: values.election_type,
+      startDate: new Date(values.startDate).toISOString(),
+      endDate: new Date(values.endDate).toISOString(),
+      constituencyId: values.constituency.id,
+      electionType: values.electionType,
     };
 
-    console.log("payload", payload);
-    navigate("/admin/add-candidates");
+    createElection.mutate(payload, {
+      onSuccess: (data) => {
+        navigate(`/admin/add-candidates/?electionId=${data.id}`);
+      },
+    });
   };
 
   return (
@@ -154,13 +159,13 @@ export default function CreateConstituencyElectionPage() {
               />
               <FormField
                 control={form.control}
-                name="election_type"
+                name="electionType"
                 render={({ field }) => (
                   <FormItem className="w-[50%]">
                     <FormLabel>Election Type</FormLabel>
-                    <Select>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger {...field}>
+                        <SelectTrigger>
                           <SelectValue placeholder="Select election type" />
                         </SelectTrigger>
                       </FormControl>
@@ -184,7 +189,7 @@ export default function CreateConstituencyElectionPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="start_date"
+                  name="startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Start Date</FormLabel>
@@ -206,7 +211,7 @@ export default function CreateConstituencyElectionPage() {
 
                 <FormField
                   control={form.control}
-                  name="end_date"
+                  name="endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>End Date</FormLabel>
@@ -216,7 +221,7 @@ export default function CreateConstituencyElectionPage() {
                         disabledDates={(date) =>
                           date <
                           new Date(
-                            new Date(form.getValues("start_date")).getTime() +
+                            new Date(form.getValues("startDate")).getTime() +
                               24 * 60 * 60 * 1000
                           )
                         }
@@ -411,7 +416,15 @@ export default function CreateConstituencyElectionPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Continue to Add Candidates</Button>
+                <Button type="submit" disabled={createElection.isPending}>
+                  {createElection.isPending && (
+                    <Loader
+                      size="sm"
+                      className="mr-2 border-white border-t-primary"
+                    />
+                  )}
+                  Continue to Add Candidates
+                </Button>
               </div>
             </form>
           </Form>

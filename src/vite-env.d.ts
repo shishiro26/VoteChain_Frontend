@@ -66,6 +66,13 @@ declare global {
     id: string;
     name: string;
     symbol: string;
+    logo: string;
+  };
+
+  type Location = {
+    stateName: string;
+    districtName: string;
+    constituencyName: string;
   };
 
   type User = {
@@ -81,6 +88,7 @@ declare global {
     aadharImage: string;
     aadharNumber: string;
     dob: string;
-    parties?: PartySummary[];
+    party?: PartySummary;
+    location: Location;
   };
 }

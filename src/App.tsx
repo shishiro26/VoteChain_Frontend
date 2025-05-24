@@ -20,7 +20,7 @@ import ManagePartyMembersPage from "./pages/parties/manage-members.tsx";
 
 import ApproveUsersPage from "@/pages/approve-users.tsx";
 import DeclareResultsPage from "@/pages/declare-results.tsx";
-import AddCandidatesPage from "@/pages/create-elections/add-candidate.tsx";
+import AddCandidatesPage from "@/pages/add-candidates/candidate-page.tsx";
 import ManagePartiesPage from "@/pages/manage-parties/manage-parties.tsx";
 
 import CreateElectionPage from "@/pages/create-elections/create-elections.tsx";

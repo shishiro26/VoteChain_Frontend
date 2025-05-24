@@ -6,17 +6,19 @@ export const useSearchUser = () => {
     walletAddress,
     status,
     role,
+    inParty = "true",
   }: {
     walletAddress: string;
     status: string;
     role: string;
+    inParty?: string;
   }) => {
     if (!walletAddress) {
       throw new Error("Wallet address is required");
     }
 
     const res = await api.get(`/api/v1/auth/search`, {
-      params: { walletAddress, status, role },
+      params: { walletAddress, status, role, inParty },
     });
 
     return res.data.data;

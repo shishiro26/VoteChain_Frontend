@@ -78,7 +78,7 @@ const UserParty = () => {
               : "Not available"}
           </div>
         </CardContent>
-        <CardFooter className="bg-muted/50 border-t pb  -4 flex justify-between">
+        <CardFooter className="bg-muted/50 border-t pb-4 flex justify-between">
           <Button
             variant="outline"
             onClick={() => navigate(`/parties/${party.id}`)}

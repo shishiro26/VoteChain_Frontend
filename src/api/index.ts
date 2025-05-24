@@ -273,3 +273,73 @@ export const useRejectPartyMember = () => {
     },
   });
 };
+
+export const useCreateElectionMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      purpose: string;
+      startDate: string;
+      endDate: string;
+      constituencyId: string;
+      electionType: string;
+    }) => {
+      const res = await api.post(`${API}/api/v1/election/create`, {
+        title: payload.title,
+        purpose: payload.purpose,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        constituencyId: payload.constituencyId,
+        electionType: payload.electionType,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["elections"] });
+    },
+  });
+};
+
+export const useGetElectionsQuery = ({
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt:desc",
+}: ParamFilters) => {
+  return useQuery({
+    queryKey: ["elections", page, limit, sortBy],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/election/get-elections`, {
+        params: {
+          page,
+          limit,
+          sortBy,
+        },
+      });
+      return res.data.data;
+    },
+  });
+};
+
+export const useAddCandidateMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      electionId: string;
+      constituencyId: string;
+      candidates: { userId: string; partyId: string | undefined }[];
+    }) => {
+      const res = await api.post(`${API}/api/v1/election/add-candidates`, {
+        electionId: payload.electionId,
+        constituencyId: payload.constituencyId,
+        candidates: payload.candidates,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["elections"] });
+    },
+  });
+};

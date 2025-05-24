@@ -27,7 +27,7 @@ import UserVoting from "@/components/shared/profile/user-voting";
 import UserWallet from "@/components/shared/profile/user-wallet";
 import UserLocation from "@/components/shared/profile/user-location";
 import { formatDate } from "@/utils/formatDate";
-import { Loader } from "@/components/shared/loaders/loader";
+import { Loader } from "@/components/ui/loader";
 import { useWallet } from "@/store/useWallet";
 
 export default function ProfilePage() {

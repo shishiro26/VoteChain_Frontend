@@ -66,7 +66,7 @@ export default function AdminLayout() {
 
   if (isAuthorized === false) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex items-center justify-center bg-background">
         <div className="max-w-md text-center p-6 rounded-lg border shadow-sm">
           <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="h-8 w-8 text-destructive" />
@@ -85,7 +85,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex bg-background">
       <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex-1 overflow-auto">
         <div className="p-4 md:p-6">
