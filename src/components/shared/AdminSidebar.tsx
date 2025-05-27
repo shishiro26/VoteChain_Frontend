@@ -44,7 +44,6 @@ const AdminSidebar = ({ isOpen, toggleSidebar }: AdminSidebarProps) => {
   }, []);
 
   const navigation = [
-    { name: "Dashboard", href: "/admin", icon: BarChart3 },
     {
       name: "Create Election",
       href: "/admin/create-election",
@@ -90,7 +89,7 @@ const AdminSidebar = ({ isOpen, toggleSidebar }: AdminSidebarProps) => {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between h-16 px-4 border-b border-border">
             {isOpen ? (
-              <Link to="/admin" className="flex items-center">
+              <Link to="/admin/" className="flex items-center">
                 <span className="text-xl font-bold text-primary">Admin</span>
               </Link>
             ) : (

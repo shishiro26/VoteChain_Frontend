@@ -45,6 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getStatusBadge } from "@/utils/status-badge";
 import { UserDetailsDialog } from "@/components/shared/admin/approve-users/users-with-dialog";
 import { handleAxiosError } from "@/utils/errorHandler";
+import Pagination from "@/components/shared/pagination";
 
 type Location = {
   state_name: string;
@@ -113,15 +114,11 @@ export default function ApproveUsersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDetailsDialogOpen, setUserDetailsDialogOpen] = useState(false);
   const status = searchParams.get("status") || "pending";
-  const page = searchParams.get("page") || "1";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  const {
-    data: users,
-    isLoading,
-    refetch,
-  } = usePendingUsers({
-    page: Number(page),
-    limit: 10,
+  const { data, isLoading, refetch } = usePendingUsers({
+    page: currentPage,
+    limit: 4,
     filter: { status: status.toUpperCase() },
     sortBy: "createdAt:desc",
     populate: "userDetails,userLocation",
@@ -130,8 +127,30 @@ export default function ApproveUsersPage() {
   const approveUser = useApproveUserMutation();
   const rejectUser = useRejectUserMutation();
 
+  const totalPages = data?.query?.totalPages || 1;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      searchParams.set("page", page.toString());
+      setSearchParams(searchParams);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
   const filteredUsers = useMemo(() => {
-    if (isLoading || !users) return [];
+    const users = data?.data || [];
+    if (isLoading || users.length === 0) return [];
     return users.filter(
       (user: User) =>
         user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,7 +158,7 @@ export default function ApproveUsersPage() {
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.walletAddress.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [isLoading, users, searchTerm]);
+  }, [isLoading, data, searchTerm]);
 
   const handleApprove = (user: User) => {
     setSelectedUser(user);
@@ -262,7 +281,7 @@ export default function ApproveUsersPage() {
           />
         </div>
       </div>
-      <Tabs value={status} onValueChange={handleTabChange}>
+      <Tabs value={status} onValueChange={handleTabChange} className="mb-6">
         <TabsList className="mb-6">
           {Object.entries(types).map(([key, value]) => (
             <TabsTrigger key={key} value={key} className="relative">
@@ -381,6 +400,15 @@ export default function ApproveUsersPage() {
           </TabsContent>
         ))}
       </Tabs>
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          goToPage={goToPage}
+          goToNextPage={goToNextPage}
+          goToPreviousPage={goToPreviousPage}
+        />
+      )}
 
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
         <AlertDialogContent>

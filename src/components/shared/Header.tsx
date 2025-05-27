@@ -41,12 +41,9 @@ export default function Header() {
   const pathname = location.pathname;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  console.log("profile", profile);
-
   const navigation = [
     { name: "Home", href: "/" },
     { name: "Vote", href: "/vote" },
-    { name: "Results", href: "/results" },
     { name: "Parties", href: "/browse/parties" },
   ];
 

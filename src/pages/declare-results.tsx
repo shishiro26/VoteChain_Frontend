@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -28,143 +27,99 @@ import {
   Medal,
   Search,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatDate } from "@/utils/formatDate";
+import { useDeclareResultMutation, useGetElectionResultsQuery } from "@/api";
+import { useSearchParams } from "react-router";
+import Pagination from "@/components/shared/pagination";
+import { Loader } from "@/components/ui/loader";
+import { toast } from "sonner";
 
-// Election model type
-interface Election {
+type Party = {
+  id: string;
+  name: string;
+  symbol: string;
+};
+
+type Candidate = {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  profileImage: string;
+  party: Party;
+  votes: number;
+  winner: boolean;
+};
+
+type Constituency = {
+  id: string;
+  name: string;
+};
+
+type Election = {
   id: string;
   title: string;
   purpose: string;
-  start_date: Date;
-  end_date: Date;
-  state: string;
-  status: number; // 0 = Upcoming, 1 = Ongoing, 2 = Completed
-  total_votes: number;
-  constituency_id: string;
-  constituency_name: string;
-  created_at: Date;
-  updated_at: Date;
-  result_declared: boolean;
-}
-
-// Candidate model type
-interface Candidate {
-  id: string;
-  name: string;
-  party: string;
-  image: string;
-  election_id: string;
-  votes: number;
-}
-
-// Sample completed elections
-const COMPLETED_ELECTIONS: Election[] = [
-  {
-    id: "3",
-    title: "Karnataka Municipal Corporation Election",
-    purpose: "Election of Municipal Corporation Members",
-    start_date: new Date("2023-09-01"),
-    end_date: new Date("2023-09-15"),
-    state: "Karnataka",
-    status: 2, // Completed
-    total_votes: 8750,
-    constituency_id: "c3",
-    constituency_name: "Bengaluru Central",
-    created_at: new Date("2023-08-01"),
-    updated_at: new Date("2023-09-16"),
-    result_declared: false,
-  },
-  {
-    id: "6",
-    title: "Tamil Nadu Local Body Election",
-    purpose: "Election of Panchayat members",
-    start_date: new Date("2023-08-10"),
-    end_date: new Date("2023-08-20"),
-    state: "Tamil Nadu",
-    status: 2, // Completed
-    total_votes: 6300,
-    constituency_id: "c6",
-    constituency_name: "Chennai North",
-    created_at: new Date("2023-07-15"),
-    updated_at: new Date("2023-08-21"),
-    result_declared: true,
-  },
-];
-
-// Sample candidates data
-const CANDIDATES_BY_ELECTION: Record<string, Candidate[]> = {
-  "3": [
-    {
-      id: "c7",
-      name: "Ramesh Rao",
-      party: "People's Democratic Front",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "3",
-      votes: 3200,
-    },
-    {
-      id: "c8",
-      name: "Lakshmi Devi",
-      party: "Municipal Workers Party",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "3",
-      votes: 2800,
-    },
-    {
-      id: "c9",
-      name: "Venkat Reddy",
-      party: "Urban Development Alliance",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "3",
-      votes: 2750,
-    },
-  ],
-  "6": [
-    {
-      id: "c10",
-      name: "Meena Kumari",
-      party: "Rural Development Front",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "6",
-      votes: 2500,
-    },
-    {
-      id: "c11",
-      name: "Senthil Kumar",
-      party: "People's Welfare Party",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "6",
-      votes: 2300,
-    },
-    {
-      id: "c12",
-      name: "Anitha Rajan",
-      party: "Progressive Alliance",
-      image: "/placeholder.svg?height=100&width=100",
-      election_id: "6",
-      votes: 1500,
-    },
-  ],
+  startDate: string;
+  endDate: string;
+  level: "CONSTITUENCY" | "STATE" | "NATIONAL";
+  electionType: "LOK_SABHA" | "VIDHAN_SABHA" | "BY_ELECTION";
+  status: "ONGOING" | "COMPLETED" | "UPCOMING";
+  resultDeclared: boolean;
+  isDraw: boolean;
+  totalVotes: number;
+  constituency: Constituency;
+  candidates: Candidate[];
 };
 
 export default function DeclareResultsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedElection, setSelectedElection] = useState<Election | null>(
     null
   );
   const [declareDialogOpen, setDeclareDialogOpen] = useState(false);
-  //   const { toast } = useToast()
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  // Filter elections based on search term
-  const filteredElections = COMPLETED_ELECTIONS.filter(
-    (election) =>
-      election.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      election.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      election.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      election.constituency_name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  const { data, isLoading } = useGetElectionResultsQuery({
+    page: 1,
+    limit: 3,
+    sortBy: "createdAt:desc",
+  });
+
+  const declareResult = useDeclareResultMutation();
+
+  const totalPages = data?.query?.totalPages || 1;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      searchParams.set("page", page.toString());
+      setSearchParams(searchParams);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const filteredElections =
+    data &&
+    data.data.filter(
+      (election: Election) =>
+        election.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        election.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        election.constituency.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+    );
 
   const handleDeclareResult = (election: Election) => {
     setSelectedElection(election);
@@ -173,28 +128,30 @@ export default function DeclareResultsPage() {
 
   const confirmDeclareResult = () => {
     if (!selectedElection) return;
-
-    // Simulate API call to declare result
-    // toast({
-    //   title: "Result Declared",
-    //   description: `Results for ${selectedElection.title} have been officially declared.`,
-    // })
-    setDeclareDialogOpen(false);
-  };
-
-  // Helper function to find the winner candidate
-  const getWinnerCandidate = (candidates: Candidate[]) => {
-    if (!candidates.length) return null;
-    return candidates.reduce((prev, current) =>
-      prev.votes > current.votes ? prev : current
+    declareResult.mutate(
+      {
+        electionId: selectedElection.id,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Results for ${selectedElection.title} declared successfully!`,
+            {
+              duration: 3000,
+            }
+          );
+          setDeclareDialogOpen(false);
+          setSelectedElection(null);
+        },
+      }
     );
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Declare Results</h1>
+      <h1 className="text-3xl font-bold mb-2">Declare Results</h1>
 
-      <div className="mb-6">
+      <div className="mb-2">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -202,11 +159,14 @@ export default function DeclareResultsPage() {
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={isLoading}
           />
         </div>
       </div>
 
-      {filteredElections.length === 0 ? (
+      {isLoading ? (
+        <Loader size="lg" text="Loading completed elections..." />
+      ) : filteredElections.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
             No completed elections found.
@@ -214,20 +174,19 @@ export default function DeclareResultsPage() {
         </Card>
       ) : (
         <div className="space-y-8">
-          {filteredElections.map((election) => {
-            const candidates = CANDIDATES_BY_ELECTION[election.id] || [];
-            const winner = getWinnerCandidate(candidates);
+          {filteredElections.map((election: Election) => {
+            const winner = election.candidates.find((c) => c.winner);
 
             return (
-              <Card key={election.id} className="overflow-hidden">
-                <CardHeader className="bg-primary/5 border-b border-border">
+              <Card key={election.id} className="overflow-hidden pt-0">
+                <CardHeader className="bg-primary/5 border-b border-border pt-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-xl">
                         {election.title}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        {election.purpose}
+                        {election.purpose.slice(0, 100)}...
                       </CardDescription>
                     </div>
                     <Badge
@@ -239,45 +198,55 @@ export default function DeclareResultsPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6">
+
+                <CardContent>
                   <div className="space-y-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center text-sm">
                           <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                           <span>
-                            {format(election.start_date, "MMM d, yyyy")} -{" "}
-                            {format(election.end_date, "MMM d, yyyy")}
+                            {formatDate(new Date(election.startDate))} -{" "}
+                            {formatDate(new Date(election.endDate))}
                           </span>
                         </div>
                         <div className="flex items-center text-sm">
                           <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>
-                            {election.state}, {election.constituency_name}
-                          </span>
+                          <span>{election.constituency.name}</span>
                         </div>
                         <div className="text-sm">
                           <span className="font-medium">
-                            {election.total_votes}
+                            {election.totalVotes}
                           </span>{" "}
                           total votes cast
                         </div>
                       </div>
 
                       <div>
-                        {election.result_declared ? (
+                        {election.resultDeclared ? (
                           <div className="flex items-center bg-green-100 text-green-800 px-4 py-2 rounded-md">
                             <Crown className="h-5 w-5 mr-2" />
                             <div>
                               <p className="font-medium">Results Declared</p>
-                              <p className="text-sm">
-                                Winner: {winner?.name} ({winner?.party})
-                              </p>
+                              {election.isDraw ? (
+                                <p className="text-sm text-yellow-800">
+                                  Result: <strong>Draw</strong>
+                                </p>
+                              ) : winner ? (
+                                <p className="text-sm">
+                                  Winner: {winner.firstName} {winner.lastName} (
+                                  {winner.party.name})
+                                </p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  No winner info available
+                                </p>
+                              )}
                             </div>
                           </div>
                         ) : (
                           <Button onClick={() => handleDeclareResult(election)}>
-                            <Medal className="h-4 w-4 mr-2" /> Declare Result
+                            <Medal className="h-4 w-4" /> Declare Result
                           </Button>
                         )}
                       </div>
@@ -288,8 +257,8 @@ export default function DeclareResultsPage() {
                         Candidates & Vote Count
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {candidates.map((candidate) => {
-                          const isWinner = winner?.id === candidate.id;
+                        {election.candidates.map((candidate) => {
+                          const isWinner = candidate.winner;
                           return (
                             <Card
                               key={candidate.id}
@@ -302,9 +271,10 @@ export default function DeclareResultsPage() {
                                   <div className="relative">
                                     <img
                                       src={
-                                        candidate.image || "/placeholder.svg"
+                                        candidate.profileImage ||
+                                        "/placeholder.svg"
                                       }
-                                      alt={candidate.name}
+                                      alt={candidate.firstName}
                                       className="w-16 h-16 rounded-full object-cover border"
                                     />
                                     {isWinner && (
@@ -315,10 +285,10 @@ export default function DeclareResultsPage() {
                                   </div>
                                   <div>
                                     <h4 className="font-medium">
-                                      {candidate.name}
+                                      {candidate.firstName} {candidate.lastName}
                                     </h4>
                                     <p className="text-sm text-muted-foreground">
-                                      {candidate.party}
+                                      {candidate.party.name}
                                     </p>
                                     <div className="mt-1 flex items-center">
                                       <Badge
@@ -347,7 +317,8 @@ export default function DeclareResultsPage() {
                     </div>
                   </div>
                 </CardContent>
-                {!election.result_declared && (
+
+                {!election.resultDeclared && (
                   <CardFooter className="border-t border-border pt-4 bg-muted/30">
                     <p className="text-sm text-muted-foreground">
                       <span className="font-medium">Note:</span> Declaring
@@ -359,10 +330,18 @@ export default function DeclareResultsPage() {
               </Card>
             );
           })}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              goToPage={goToPage}
+              goToNextPage={goToNextPage}
+              goToPreviousPage={goToPreviousPage}
+            />
+          )}
         </div>
       )}
 
-      {/* Declare Result Dialog */}
       <AlertDialog open={declareDialogOpen} onOpenChange={setDeclareDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -375,12 +354,21 @@ export default function DeclareResultsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
               onClick={confirmDeclareResult}
               className="bg-primary hover:bg-primary/90"
+              disabled={declareResult.isPending}
             >
-              <Medal className="h-4 w-4 mr-2" /> Declare Results
-            </AlertDialogAction>
+              {declareResult.isPending ? (
+                <Loader
+                  size="sm"
+                  className="border-white border-t-transparent"
+                />
+              ) : (
+                <Medal className="h-4 w-4F" />
+              )}
+              Declare Results
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

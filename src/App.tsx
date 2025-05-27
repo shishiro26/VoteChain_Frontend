@@ -8,9 +8,8 @@ import UpdateProfile from "@/pages/update-profile/update-profile.tsx";
 
 import NotFound from "@/components/shared/not-found.tsx";
 import ProfilePage from "@/pages/profile/page.tsx";
-import ResultsPage from "@/pages/results.tsx";
-import VotePage from "@/pages/vote/page.tsx";
-import ElectionDetailPage from "@/pages/vote/[electionid].tsx";
+import VotePage from "@/pages/vote/elections.tsx";
+import ElectionDetailPage from "@/pages/vote/election-detail-page.tsx";
 
 import SecurePartyCreationPage from "@/pages/parties/page.tsx";
 import VerifyEmailToken from "@/pages/parties/verify-email-token.tsx";
@@ -27,6 +26,7 @@ import CreateElectionPage from "@/pages/create-elections/create-elections.tsx";
 import CreateStateElectionPage from "@/pages/create-elections/state/state.tsx";
 import CreateConstituencyElectionPage from "@/pages/create-elections/constituency.tsx";
 import LoginPage from "./pages/login/login.tsx";
+import AdminDashboard from "./pages/admin/page.tsx";
 
 function App() {
   const { isProfileComplete } = useWallet();
@@ -46,7 +46,6 @@ function App() {
 
         <Route path="/vote" element={<VotePage />} />
         <Route path="/vote/:id" element={<ElectionDetailPage />} />
-        <Route path="/results" element={<ResultsPage />} />
 
         <Route path="/party/verify" element={<VerifyEmailToken />} />
         <Route path="/party/update" element={<SecurePartyCreationPage />} />
@@ -55,7 +54,7 @@ function App() {
         <Route path="/parties/:id/edit" element={<ManagePartyMembersPage />} />
 
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<>Hello This is the admin page</>} />
+          <Route index element={<AdminDashboard />} />
           <Route path="approve-users" element={<ApproveUsersPage />} />
           <Route path="declare-results" element={<DeclareResultsPage />} />
           <Route path="add-candidates" element={<AddCandidatesPage />} />

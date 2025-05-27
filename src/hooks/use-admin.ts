@@ -30,7 +30,10 @@ export const usePendingUsers = ({
           populate,
         },
       });
-      return res.data.data;
+      return {
+        data: res.data.data,
+        query: res.data.query,
+      };
     },
     staleTime: 1000 * 60 * 60,
     retry: 1,

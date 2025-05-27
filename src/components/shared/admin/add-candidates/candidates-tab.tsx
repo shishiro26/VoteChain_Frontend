@@ -104,7 +104,7 @@ const CandidatesTab = ({
         <CardTitle>Add Party Members as Candidates</CardTitle>
         <CardDescription>
           Search for party members by wallet address to add them as candidates
-          for {election.title}
+          for {election && election.title}
         </CardDescription>
       </CardHeader>
       <CardContent>

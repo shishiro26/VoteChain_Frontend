@@ -196,10 +196,7 @@ export default function CreateConstituencyElectionPage() {
                       <DateTimePicker
                         date={field.value}
                         setDate={field.onChange}
-                        disabledDates={(date) =>
-                          date <
-                          new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
-                        }
+                        
                       />
                       <FormDescription>
                         The start date needs to be at least 1 day from today.
@@ -218,13 +215,7 @@ export default function CreateConstituencyElectionPage() {
                       <DateTimePicker
                         date={field.value}
                         setDate={field.onChange}
-                        disabledDates={(date) =>
-                          date <
-                          new Date(
-                            new Date(form.getValues("startDate")).getTime() +
-                              24 * 60 * 60 * 1000
-                          )
-                        }
+                        
                       />
                       <FormDescription>
                         The end date needs to be at least 1 day after the start

@@ -18,31 +18,44 @@ import { formatDate } from "@/utils/formatDate";
 import { Loader } from "@/components/ui/loader";
 import { getPartyStatusBadge } from "@/utils/status-badge";
 import UserParty from "@/components/shared/manage-parties/user-party";
+import Pagination from "@/components/shared/pagination";
 
 export default function PartiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("browse");
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const page = searchParams.get("page") || "1";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handlePageChange = (newPage: number) => {
-    setSearchParams((prevParams) => {
-      const newParams = new URLSearchParams(prevParams);
-      newParams.set("page", newPage.toString());
-      return newParams;
-    });
-  };
-
-  const { data: partiesData, isLoading } = useGetAllPartiesQuery({
-    page: Number(page),
-    limit: 10,
+  const { data, isLoading } = useGetAllPartiesQuery({
+    page: Number(currentPage),
+    limit: 6,
     sortBy: "createdAt:desc",
     populate: "details,partyMembers.user.userDetails,tokens",
   });
 
-  const filteredParties = partiesData?.results ?? [];
+  const filteredParties = data?.data.results ?? [];
+
+  const totalPages = data?.query?.totalPages || 1;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      searchParams.set("page", page.toString());
+      setSearchParams(searchParams);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -54,7 +67,6 @@ export default function PartiesPage() {
           </p>
         </div>
       </div>
-
       <Alert className="mb-6">
         <Info className="h-4 w-4" />
         <AlertDescription>
@@ -63,7 +75,6 @@ export default function PartiesPage() {
           parties.
         </AlertDescription>
       </Alert>
-
       <Tabs
         defaultValue={activeTab}
         onValueChange={setActiveTab}
@@ -164,6 +175,15 @@ export default function PartiesPage() {
           <UserParty />
         </TabsContent>
       </Tabs>
+      {totalPages > 1 && activeTab === "browse" && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          goToPage={goToPage}
+          goToNextPage={goToNextPage}
+          goToPreviousPage={goToPreviousPage}
+        />
+      )}
     </div>
   );
 }

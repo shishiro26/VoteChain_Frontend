@@ -1,7 +1,6 @@
 import React from "react";
 import {
   MutationCache,
-  QueryCache,
   QueryClient,
   QueryClientProvider,
   onlineManager,
@@ -42,12 +41,6 @@ export const ShowToast = (
 
 export function ReactQueryProvider({ children }: React.PropsWithChildren) {
   const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error: unknown) => {
-        const err = error as Error;
-        console.error(err);
-      },
-    }),
     mutationCache: new MutationCache({
       onError: (error: unknown) => {
         const err = error as Error;
@@ -57,6 +50,10 @@ export function ReactQueryProvider({ children }: React.PropsWithChildren) {
     defaultOptions: {
       mutations: {
         onError: (error) => handleAxiosError(error),
+      },
+      queries: {
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
       },
     },
   });

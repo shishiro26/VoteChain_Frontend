@@ -305,6 +305,7 @@ const CandidatesReview = ({
               variant="destructive"
               onClick={handleSubmitCandidates}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={addCandidates.isPending}
             >
               {addCandidates.isPending && (
                 <Loader

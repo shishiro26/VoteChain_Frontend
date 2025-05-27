@@ -26,6 +26,8 @@ type Party = {
 type Location = {
   state: string;
   constituency: string;
+  constituencyId: string;
+  stateId: string;
 };
 
 type Profile = {
@@ -42,6 +44,7 @@ type Profile = {
   party: Party | null;
   location: Location;
   profileImage: string;
+  dob: string;
 };
 
 type WalletState = {

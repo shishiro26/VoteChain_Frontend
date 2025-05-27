@@ -10,7 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function NotFound() {
+export default function NotFound({
+  text,
+  link,
+}: { text?: string; link?: string } = {}) {
   return (
     <div className="container flex items-center justify-center min-h-[80vh] px-4 py-12">
       <Card className="max-w-md w-full">
@@ -33,9 +36,9 @@ export default function NotFound() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button asChild className="w-full">
-            <Link to="/">
+            <Link to={link || "/"}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Return to Home
+              {text || "Go Back Home"}
             </Link>
           </Button>
           <p className="text-xs text-center text-muted-foreground">
@@ -44,5 +47,5 @@ export default function NotFound() {
         </CardFooter>
       </Card>
     </div>
-  );
+  );  
 }

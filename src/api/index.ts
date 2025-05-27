@@ -60,7 +60,10 @@ export const useGetAllPartiesQuery = ({
           filter,
         },
       });
-      return res.data.data;
+      return {
+        data: res.data.data,
+        query: res.data.query,
+      };
     },
   });
 };
@@ -173,7 +176,6 @@ export const useGetProfileDetailsByWalletId = (
           walletAddress,
         },
       });
-      console.log("res", res.data);
       return res.data.data;
     },
     enabled: !!walletAddress && isProfileComplete && !profile,
@@ -334,6 +336,131 @@ export const useAddCandidateMutation = () => {
         electionId: payload.electionId,
         constituencyId: payload.constituencyId,
         candidates: payload.candidates,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["elections"] });
+    },
+  });
+};
+
+export const useGetElectionsByConstituencyQuery = ({
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt:desc",
+}: {
+  page: number;
+  limit: number;
+  sortBy: string;
+}) => {
+  return useQuery({
+    queryKey: ["elections", page, limit, sortBy],
+    queryFn: async () => {
+      const res = await api.get(
+        `${API}/api/v1/election/get-elections/constituency`,
+        {
+          params: {
+            page,
+            limit,
+            sortBy,
+          },
+        }
+      );
+      return {
+        data: res.data.data,
+        query: res.data.query,
+      };
+    },
+  });
+};
+
+export const useGetElectionByElectionIdQuery = (electionId: string) => {
+  const isValidElectionId = electionId !== undefined && electionId !== "";
+  return useQuery({
+    queryKey: ["election", electionId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`${API}/api/v1/election/get-election`, {
+          params: {
+            electionId,
+          },
+        });
+
+        if (res.status !== 200) {
+          throw new Error(
+            res.data.message || "Failed to fetch election details"
+          );
+        }
+
+        return res.data.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const message =
+            err.response?.data?.message || "Failed to fetch election details";
+          throw new Error(message);
+        }
+        throw err;
+      }
+    },
+    enabled: isValidElectionId,
+  });
+};
+
+export const useCastVoteMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      electionId: string;
+      candidateId: string;
+    }) => {
+      const res = await api.post(`${API}/api/v1/election/cast-vote`, {
+        electionId: payload.electionId,
+        candidateId: payload.candidateId,
+      });
+
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["elections"] });
+    },
+  });
+};
+
+export const useGetElectionResultsQuery = ({
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt:desc",
+}: {
+  page: number;
+  limit: number;
+  sortBy: string;
+}) => {
+  return useQuery({
+    queryKey: ["elections", page, limit, sortBy],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/election/result-elections`, {
+        params: {
+          page,
+          limit,
+          sortBy,
+        },
+      });
+      return {
+        data: res.data.data,
+        query: res.data.query,
+      };
+    },
+  });
+};
+
+export const useDeclareResultMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { electionId: string }) => {
+      const res = await api.post(`${API}/api/v1/election/declare-result`, {
+        electionId: payload.electionId,
       });
 
       return res.data.data;

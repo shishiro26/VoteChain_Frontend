@@ -3,6 +3,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,33 +19,45 @@ import { copyToClipboard } from "@/utils/copy_to_clipboard";
 import { Copy, LinkIcon, Search, Users } from "lucide-react";
 import { useGetAllPartiesQuery } from "@/api";
 import { useSearchParams } from "react-router";
+import Pagination from "@/components/shared/pagination";
 
 export default function ManagePartiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showPartyDetailsDialog, setShowPartyDetailsDialog] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedParty, setSelectedParty] = useState<Party | null>(null);
-  const page = searchParams.get("page") || "1";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handlePageChange = (newPage: number) => {
-    setSearchParams((prevParams) => {
-      const newParams = new URLSearchParams(prevParams);
-      newParams.set("page", newPage.toString());
-      return newParams;
-    });
-  };
-
-  const { data: partiesData, isLoading } = useGetAllPartiesQuery({
-    page: Number(page),
-    limit: 10,
+  const { data, isLoading } = useGetAllPartiesQuery({
+    page: currentPage,
+    limit: 5,
     sortBy: "createdAt:desc",
     populate: "details,partyMembers.user.userDetails,tokens",
   });
 
-  const filteredParties = partiesData?.results ?? [];
-  console.log("filteredParties", filteredParties);
+  const filteredParties = data?.data.results ?? [];
+
+  const totalPages = data?.query?.totalPages || 1;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      searchParams.set("page", page.toString());
+      setSearchParams(searchParams);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
 
   const handleViewParty = (party: Party) => {
     setSelectedParty(party);
@@ -113,6 +126,17 @@ export default function ManagePartiesPage() {
                   </div>
                 )}
               </CardContent>
+              {totalPages > 1 && (
+                <CardFooter>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    goToPage={goToPage}
+                    goToNextPage={goToNextPage}
+                    goToPreviousPage={goToPreviousPage}
+                  />
+                </CardFooter>
+              )}
             </Card>
           )}
         </TabsContent>
@@ -121,7 +145,7 @@ export default function ManagePartiesPage() {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Generate Party Creation Link</CardTitle>
-              <CardDescription>
+              <CardDescription className="w-fit">
                 Create a special link that allows a specific user to register a
                 new political party
               </CardDescription>
@@ -174,6 +198,17 @@ export default function ManagePartiesPage() {
                 </div>
               )}
             </CardContent>
+            {totalPages > 1 && (
+              <CardFooter>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  goToPage={goToPage}
+                  goToNextPage={goToNextPage}
+                  goToPreviousPage={goToPreviousPage}
+                />
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
       </Tabs>

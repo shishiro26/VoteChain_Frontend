@@ -18,6 +18,7 @@ import {
   AlertCircle,
   RefreshCw,
   Flag,
+  Calendar,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -174,10 +175,29 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Date of Birth
+                        </p>
+                        <p className="font-medium">
+                          {formatDate(new Date(user.dob))} (
+                          {Date.now() < new Date(user.dob).getTime()
+                            ? 0
+                            : Math.floor(
+                                (Date.now() - new Date(user.dob).getTime()) /
+                                  (1000 * 60 * 60 * 24 * 365)
+                              )}{" "}
+                          years old)
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
                       <Phone className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p className="font-medium">{user.phoneNumber}</p>
+                        <p className="font-medium">+91 {user.phoneNumber}</p>
                       </div>
                     </div>
 
