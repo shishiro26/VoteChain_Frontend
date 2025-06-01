@@ -33,6 +33,8 @@ import { useAddCandidateMutation } from "@/api";
 import { Loader } from "@/components/ui/loader";
 import { toast } from "sonner";
 import { useLocation } from "react-router";
+import { getElectionContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
 
 type ElectionLocation = {
   constituencyId: string;
@@ -80,39 +82,68 @@ const CandidatesReview = ({
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const electionId = queryParams.get("electionId");
+  const [isLoading, setIsLoading] = useState(false);
 
   const addCandidates = useAddCandidateMutation();
-  const handleSubmitCandidates = () => {
-    const payload = {
-      electionId: election.id,
-      constituencyId: election.location.constituencyId,
-      candidates: selectedCandidates.map((candidate) => {
-        return {
-          userId: candidate.id,
-          partyId: candidate.party?.id,
-        };
-      }),
-    };
-    addCandidates.mutate(payload, {
-      onSuccess: () => {
-        toast.success("Candidates successfully registered for the election", {
-          description: "You can now proceed to the voting phase.",
-        });
-        setTimeout(() => {
+  const handleSubmitCandidates = async () => {
+    try {
+      setIsLoading(true);
+      const payload = {
+        electionId: election.id,
+        constituencyId: election.location.constituencyId,
+        candidates: selectedCandidates.map((candidate) => {
+          return {
+            userId: candidate.id,
+            partyId: candidate.party?.id,
+          };
+        }),
+      };
+
+      const electionContract = await getElectionContract();
+      let receipt = null;
+
+      for (const candidate of selectedCandidates) {
+        const tx = await electionContract.addCandidate(
+          parseInt(election.id.slice(-8), 16),
+          candidate.walletAddress
+        );
+        receipt = await tx.wait();
+      }
+
+      const receiptPayload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "Candidate Registration",
+      };
+
+      addCandidates.mutate(payload, {
+        onSuccess: async () => {
+          toast.success("Candidates successfully registered for the election", {
+            description: "You can now proceed to the voting phase.",
+          });
           setShowFinalConfirmation(false);
           setSelectedCandidates([]);
           setElection(null);
           setActiveTab("elections");
           setTabMode("initial");
+          await api.post("/api/v1/auth/create-transaction", receiptPayload);
           if (electionId) {
             const newUrl =
               location.pathname +
               location.search.replace(`?electionId=${electionId}`, "");
             window.history.replaceState({}, "", newUrl);
           }
-        }, 3000);
-      },
-    });
+        },
+      });
+    } catch (error) {
+      console.error("Error submitting candidates:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -305,15 +336,20 @@ const CandidatesReview = ({
               variant="destructive"
               onClick={handleSubmitCandidates}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-              disabled={addCandidates.isPending}
+              disabled={
+                addCandidates.isPending ||
+                isLoading ||
+                selectedCandidates.length === 0
+              }
             >
-              {addCandidates.isPending && (
+              {addCandidates.isPending || isLoading ? (
                 <Loader
                   size="sm"
                   className="mr-2 border-white border-t-transparent"
                 />
+              ) : (
+                <Lock className="h-4 w-4" />
               )}
-              <Lock className="h-4 w-4" />
               Yes, Finalize Election
             </Button>
           </AlertDialogFooter>

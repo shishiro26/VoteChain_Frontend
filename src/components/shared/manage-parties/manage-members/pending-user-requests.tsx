@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import { useApprovePartyMember, useRejectPartyMember } from "@/api";
 import { toast } from "sonner";
+import { getPartyContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
 
 type PartyMember = {
   id: string;
@@ -53,10 +55,24 @@ const PendingUserRequests = ({
 
   const handleApproveRequest = async (userId: string) => {
     setProcessingRequestId(userId);
+    const partyContract = await getPartyContract();
+    const tx = await partyContract.acceptInvite();
+    const receipt = await tx.wait();
+    const payload = {
+      transactionHash: receipt.hash,
+      from: receipt.from,
+      to: receipt.to,
+      blockNumber: receipt.blockNumber,
+      status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+      amount: receipt.gasUsed.toString(),
+      type: "PARTY MEMBER APPROVAL",
+    };
+
     approveUser.mutate(
       { partyId, userId },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await api.post("/api/v1/auth/create-transaction", payload);
           toast.success("User approved successfully", {
             description: "The user can participate in the election now",
           });
@@ -71,12 +87,27 @@ const PendingUserRequests = ({
 
   const handleRejectRequest = async (userId: string) => {
     setProcessingRequestId(userId);
+    const partyContract = await getPartyContract();
+    const tx = await partyContract.rejectMember(
+      partyMembers.find((m) => m.userId === userId)?.walletAddress
+    );
+    const receipt = await tx.wait();
+    const payload = {
+      transactionHash: receipt.hash,
+      from: receipt.from,
+      to: receipt.to,
+      blockNumber: receipt.blockNumber,
+      status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+      amount: receipt.gasUsed.toString(),
+      type: "PARTY MEMBER REJECTION",
+    };
     rejectUser.mutate(
       { partyId, userId },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await api.post("/api/v1/auth/create-transaction", payload);
           toast.success("User rejected successfully", {
-            description: "The user can re apply for membership in the future",
+            description: "The user can re apply for membe rship in the future",
           });
         },
         onSettled: () => {

@@ -34,16 +34,21 @@ import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn, emojiToUnicode } from "@/lib/utils";
+import { getAdminContract } from "@/utils/getContracts";
+import { useWallet } from "@/store/useWallet";
+import { api } from "@/api/axios";
 
 export default function SecurePartyCreationPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [manifesto, setManifesto] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
-
+  const { walletAddress } = useWallet();
+  const [isMetaLoading, setIsMetaLoading] = useState(false);
   const navigate = useNavigate();
   const params = new URLSearchParams(useLocation().search);
   const token = params!.get("token");
+  console.log("token", token);
   const {
     data: partyDetails,
     isLoading,
@@ -88,26 +93,54 @@ export default function SecurePartyCreationPage() {
   }
 
   const onSubmit = async (values: z.infer<typeof updatePartyFormSchema>) => {
-    const formData = new FormData();
+    try {
+      setIsMetaLoading(true);
 
-    for (const [key, value] of Object.entries(values)) {
-      if (key === "party_image" && value instanceof File) {
-        formData.append("partyImage", value);
-      } else if (typeof value === "string") {
-        formData.append(key, value);
-      } else if (key === "foundedOn" && value instanceof Date) {
-        formData.append("foundedOn", value.toISOString());
+      const formData = new FormData();
+
+      for (const [key, value] of Object.entries(values)) {
+        if (key === "party_image" && value instanceof File) {
+          formData.append("partyImage", value);
+        } else if (typeof value === "string") {
+          formData.append(key, value);
+        } else if (key === "foundedOn" && value instanceof Date) {
+          formData.append("foundedOn", value.toISOString());
+        }
       }
-    }
 
-    updateParty.mutate(formData, {
-      onSuccess: (data) => {
-        form.reset();
-        toast.success("Party updated successfully");
-        navigate(`/parties/${data.id}`);
-      },
-      onError: (error) => handleAxiosError(error),
-    });
+      const adminContract = await getAdminContract();
+      const tx = await adminContract.createParty(
+        partyDetails.name,
+        emojiToUnicode(partyDetails.symbol),
+        walletAddress
+      );
+
+      const receipt = await tx.wait();
+
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "PARTY REGISTERED",
+      };
+
+      updateParty.mutate(formData, {
+        onSuccess: async (data) => {
+          form.reset();
+          toast.success("Party updated successfully");
+          await api.post("/api/v1/auth/create-transaction", payload);
+          navigate(`/parties/${data.id}`);
+        },
+        onError: (error) => handleAxiosError(error),
+      });
+    } catch {
+      setIsMetaLoading(false);
+    } finally {
+      setIsMetaLoading(false);
+    }
   };
   if (tokenError) {
     return (
@@ -497,15 +530,15 @@ export default function SecurePartyCreationPage() {
           <Button
             variant="outline"
             onClick={() => navigate("/parties")}
-            disabled={isLoading || updateParty.isPending}
+            disabled={isLoading || updateParty.isPending || isMetaLoading}
           >
             Cancel
           </Button>
           <Button
             onClick={form.handleSubmit(onSubmit)}
-            disabled={isLoading || updateParty.isPending}
+            disabled={isLoading || updateParty.isPending || isMetaLoading}
           >
-            {isLoading && (
+            {(isLoading || isMetaLoading || updateParty.isPending) && (
               <>
                 <Loader
                   className="mr-2 border-white border-t-primary/90"

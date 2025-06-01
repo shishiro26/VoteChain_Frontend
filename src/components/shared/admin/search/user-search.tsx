@@ -33,6 +33,7 @@ const UserSearch: React.FC<UserSearchProps> = ({
         walletAddress: searchTerm.trim(),
         status: "approved",
         role: "user",
+        inParty: "false",
       },
       {
         onSuccess: (data) => {

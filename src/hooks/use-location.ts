@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/store/useWallet";
 import { toast } from "sonner";
 import { api } from "@/api/axios";
+import { getAuthContract } from "@/utils/getContracts";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -71,10 +72,29 @@ export const useUpdateProfileMutation = () => {
       });
       return res.data;
     },
-    onSuccess: (data) => {
-      console.log("Profile updated successfully", data);
+    onSuccess: async (data) => {
+      const firstName = data.data.firstName;
+      const lastName = data.data.lastName;
+      const profileImage = data.data.profileImage;
+      const authContract = await getAuthContract();
+      const tx = await authContract.register(
+        firstName + " " + lastName,
+        profileImage
+      );
+      const receipt = await tx.wait();
+
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "USER REGISTRATION",
+      };
+
+      await api.post("/api/v1/auth/create-transaction", payload);
       setIsProfileComplete(true);
-      toast.success("Profile updated successfully");
     },
     onError: (error) => {
       console.error("Error updating profile", error);

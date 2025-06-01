@@ -38,6 +38,9 @@ import {
 import { DateTimePicker } from "@/components/shared/datetime-picker";
 import { useCreateElectionMutation } from "@/api";
 import { Loader } from "@/components/ui/loader";
+import { getElectionContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
+import React from "react";
 
 const ElectionTypeOptions = [
   { value: "BY_ELECTION", label: "By Election" },
@@ -49,6 +52,7 @@ const ElectionTypeOptions = [
 
 export default function CreateConstituencyElectionPage() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof createElectionSchema>>({
     resolver: zodResolver(createElectionSchema),
@@ -81,7 +85,6 @@ export default function CreateConstituencyElectionPage() {
   const createElection = useCreateElectionMutation();
 
   const onSubmit = async (values: z.infer<typeof createElectionSchema>) => {
-    console.log("Form values:", values);
     const payload = {
       title: values.title,
       purpose: values.purpose,
@@ -90,12 +93,51 @@ export default function CreateConstituencyElectionPage() {
       constituencyId: values.constituency.id,
       electionType: values.electionType,
     };
+    try {
+      setIsLoading(true);
 
-    createElection.mutate(payload, {
-      onSuccess: (data) => {
-        navigate(`/admin/add-candidates/?electionId=${data.id}`);
-      },
-    });
+      const electionContract = await getElectionContract();
+
+      const electionTypeEnum = {
+        LOK_SABHA: 0,
+        VIDHAN_SABHA: 1,
+        MUNICIPAL: 2,
+        PANCHAYAT: 3,
+        BY_ELECTION: 4,
+      };
+
+      const tx = await electionContract.createElection(
+        payload.title,
+        payload.purpose,
+        Math.floor(new Date(values.startDate).getTime() / 1000),
+        Math.floor(new Date(values.endDate).getTime() / 1000),
+        electionTypeEnum[payload.electionType],
+        3,
+        parseInt(values.constituency.id.slice(-8), 16)
+      );
+
+      const receipt = await tx.wait();
+
+      const receiptPayload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "Election Created",
+      };
+      createElection.mutate(payload, {
+        onSuccess: async (data) => {
+          await api.post("/api/v1/auth/create-transaction", receiptPayload);
+          navigate(`/admin/add-candidates/?electionId=${data.id}`);
+        },
+      });
+    } catch (error) {
+      console.error("Error creating election:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -196,7 +238,10 @@ export default function CreateConstituencyElectionPage() {
                       <DateTimePicker
                         date={field.value}
                         setDate={field.onChange}
-                        
+                        disabledDates={(date) =>
+                          date <
+                          new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+                        }
                       />
                       <FormDescription>
                         The start date needs to be at least 1 day from today.
@@ -215,7 +260,13 @@ export default function CreateConstituencyElectionPage() {
                       <DateTimePicker
                         date={field.value}
                         setDate={field.onChange}
-                        
+                        disabledDates={(date) =>
+                          date <
+                          new Date(
+                            new Date(form.getValues("startDate")).getTime() +
+                              24 * 60 * 60 * 1000
+                          )
+                        }
                       />
                       <FormDescription>
                         The end date needs to be at least 1 day after the start
@@ -407,8 +458,11 @@ export default function CreateConstituencyElectionPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createElection.isPending}>
-                  {createElection.isPending && (
+                <Button
+                  type="submit"
+                  disabled={createElection.isPending || isLoading}
+                >
+                  {(createElection.isPending || isLoading) && (
                     <Loader
                       size="sm"
                       className="mr-2 border-white border-t-primary"

@@ -152,9 +152,7 @@ export default function ManagePartyMembersPage() {
             disabled={isLoading}
           >
             <Clock className="w-4 h-4" /> Membership Requests
-            <Badge variant="secondary" className="ml-1">
-              {profile.party.pending_count ?? 0}
-            </Badge>
+            
           </TabsTrigger>
         </TabsList>
 

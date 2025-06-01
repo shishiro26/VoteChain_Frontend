@@ -14,6 +14,9 @@ import { useWallet } from "@/store/useWallet";
 import { formatDate } from "@/utils/formatDate";
 import { useJoinPartyMutation } from "@/api";
 import { toast } from "sonner";
+import { getPartyContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
+import { useState } from "react";
 
 interface Member {
   id: string;
@@ -54,25 +57,53 @@ const PartyInfoCard = ({ party }: { party: PartyDetails }) => {
   const location = useLocation();
   const partyId = location.pathname.split("/")[2];
   const { walletAddress } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
   const isPartyLeader = party.leader_wallet_address === walletAddress;
 
   const join_party = useJoinPartyMutation();
+  const handleJoinParty = async () => {
+    if (party.memberStatus !== "NOT_MEMBER") return;
 
-  const handleJoinParty = () => {
-    console.log("Join Party", party.memberStatus);
-    if (party.memberStatus === "NOT_MEMBER") {
+    try {
+      setIsLoading(true);
+
+      const partyContract = await getPartyContract();
+      const tx = await partyContract.inviteMember(walletAddress);
+      const receipt = await tx.wait();
+
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "PARTY JOIN",
+      };
+
+      console.log("Transaction Receipt", receipt);
+      console.log("Payload for API", payload);
+
       join_party.mutate(
         { partyId },
         {
-          onSuccess: () => {
-            console.log("Party Joined");
+          onSuccess: async () => {
+            await api.post("/api/v1/auth/create-transaction", payload);
+            toast.success("Party Joined Successfully!");
           },
           onError: (error) => {
             console.error("Error Joining Party", error);
-            toast.error("Error Joining Party. Please try again later.");
+            toast.error("Error joining party. Please try again.");
+          },
+          onSettled: () => {
+            setIsLoading(false);
           },
         }
       );
+    } catch (error) {
+      console.error("Blockchain Error", error);
+      toast.error("Transaction failed. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -182,9 +213,11 @@ const PartyInfoCard = ({ party }: { party: PartyDetails }) => {
             className="w-full"
             variant="outline"
             onClick={handleJoinParty}
-            disabled={join_party.isPending}
+            disabled={join_party.isPending || isLoading}
           >
-            {join_party.isPending && <Loader className="mr-2" size="sm" />}
+            {(join_party.isPending || isLoading) && (
+              <Loader className="mr-2" size="sm" />
+            )}
             Join Party
           </Button>
         ) : null}

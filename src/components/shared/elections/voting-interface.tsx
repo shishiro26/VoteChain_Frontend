@@ -68,6 +68,7 @@ type Election = {
 interface VotingInterfaceProps {
   election: Election;
   isLoading: boolean;
+  isVoting: boolean;
   onVote: (candidateId: string) => void;
   onExit: () => void;
 }
@@ -75,6 +76,7 @@ interface VotingInterfaceProps {
 export function VotingInterface({
   election,
   isLoading,
+  isVoting,
   onVote,
   onExit,
 }: VotingInterfaceProps) {
@@ -241,10 +243,10 @@ export function VotingInterface({
               <Button
                 size="lg"
                 onClick={onVote.bind(null, selectedCandidate)}
-                disabled={!selectedCandidate || isLoading}
+                disabled={!selectedCandidate || isLoading || isVoting}
                 className="px-12 py-3 text-lg"
               >
-                {isLoading && (
+                {(isLoading || isVoting) && (
                   <Loader
                     size="sm"
                     className="mr-2 border-white border-t-transparent"

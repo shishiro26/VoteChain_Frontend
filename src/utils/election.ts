@@ -43,9 +43,5 @@ export const getTimeProgress = (startDate: Date, endDate: Date) => {
   if (now < startDate) return 0;
   if (now > endDate) return 100;
 
-  console.log("Total Duration:", totalDuration);
-  console.log("Elapsed Time:", elapsed);
-  console.log("Progress Percentage:", (elapsed / totalDuration) * 100);
-
   return Math.round((elapsed / totalDuration) * 100);
 };

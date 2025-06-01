@@ -107,8 +107,6 @@ export const useGetPartyDetailsByToken = (token: string) => {
       }
     },
     enabled: isValidToken,
-    initialData: null,
-    retry: false,
   });
 };
 
@@ -467,6 +465,29 @@ export const useDeclareResultMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["elections"] });
+    },
+  });
+};
+
+export const useGetTransactionsQuery = ({
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt:desc",
+}: ParamFilters) => {
+  return useQuery({
+    queryKey: ["transactions", page, limit, sortBy],
+    queryFn: async () => {
+      const res = await api.get(`${API}/api/v1/auth/get-all-transactions`, {
+        params: {
+          page,
+          limit,
+          sortBy,
+        },
+      });
+      return {
+        data: res.data.data,
+        query: res.data.query,
+      };
     },
   });
 };

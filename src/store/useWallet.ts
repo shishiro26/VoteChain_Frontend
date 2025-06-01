@@ -88,8 +88,6 @@ export const useWallet = create(
               `${import.meta.env.VITE_API_URL}/api/v1/auth/jwt`,
               { withCredentials: true }
             );
-            console.log("Decoded response:", loginResponse);
-            console.log("Decoded response:", decodeResponse.data.data);
 
             const { walletAddress, role, status } = decodeResponse.data.data;
             let profileCompleted = true;

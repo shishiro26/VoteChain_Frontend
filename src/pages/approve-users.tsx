@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -46,6 +45,8 @@ import { getStatusBadge } from "@/utils/status-badge";
 import { UserDetailsDialog } from "@/components/shared/admin/approve-users/users-with-dialog";
 import { handleAxiosError } from "@/utils/errorHandler";
 import Pagination from "@/components/shared/pagination";
+import { getAdminContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
 
 type Location = {
   state_name: string;
@@ -113,6 +114,8 @@ export default function ApproveUsersPage() {
   const [rejectedReason, setRejectedReason] = useState<string>("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDetailsDialogOpen, setUserDetailsDialogOpen] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const status = searchParams.get("status") || "pending";
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
@@ -170,23 +173,45 @@ export default function ApproveUsersPage() {
     setRejectDialogOpen(true);
   };
 
-  const confirmApprove = () => {
-    approveUser.mutate(
-      {
-        userId: selectedUser!.id,
-      },
-      {
-        onSuccess: () => {
-          setTimeout(() => {
+  const confirmApprove = async () => {
+    try {
+      setIsApproving(true);
+
+      const adminContract = await getAdminContract();
+      const tx = await adminContract.approveUser(
+        selectedUser?.walletAddress,
+        1
+      );
+
+      const receipt = await tx.wait();
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "USER VERIFIED",
+      };
+
+      approveUser.mutate(
+        { userId: selectedUser!.id },
+        {
+          onSuccess: async () => {
             setApproveDialogOpen(false);
-          }, 10000);
-        },
-        onError: (error) => handleAxiosError(error),
-      }
-    );
+            await api.post("/api/v1/auth/create-transaction", payload);
+          },
+          onError: (error) => handleAxiosError(error),
+        }
+      );
+    } catch (err) {
+      toast.error("Approval failed: " + (err as Error).message);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
-  const confirmReject = () => {
+  const confirmReject = async () => {
     if (!rejectedReason.trim() && rejectionFields.length === 0) {
       toast.error("Please provide a reason for rejection.");
       return;
@@ -205,29 +230,47 @@ export default function ApproveUsersPage() {
       return;
     }
 
-    rejectUser.mutate(
-      {
-        userId: selectedUser!.id,
-        reason:
-          rejectedReason.trim() === "other" ? customReason : rejectedReason,
-        rejectedFields: rejectionFields,
-      },
-      {
-        onSuccess: () => {
-          setTimeout(() => {
-            setRejectDialogOpen(false);
-          }, 10000);
-        },
-        onError: (error) => handleAxiosError(error),
-      }
-    );
+    try {
+      setIsRejecting(true);
+      const adminContract = await getAdminContract();
+      const tx = await adminContract.rejectUser(selectedUser?.walletAddress);
+      const receipt = await tx.wait();
 
-    setRejectionFields([]);
-    setRejectedReason("");
-    setCustomReason("");
-    setSelectedUser(null);
-    setRejectDialogOpen(false);
-    refetch();
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "USER REJECTED",
+      };
+
+      rejectUser.mutate(
+        {
+          userId: selectedUser!.id,
+          reason:
+            rejectedReason.trim() === "other" ? customReason : rejectedReason,
+          rejectedFields: rejectionFields,
+        },
+        {
+          onSuccess: async () => {
+            setRejectDialogOpen(false);
+            await api.post("/api/v1/auth/create-transaction", payload);
+          },
+          onError: (error) => handleAxiosError(error),
+        }
+      );
+
+      setRejectionFields([]);
+      setRejectedReason("");
+      setCustomReason("");
+      setSelectedUser(null);
+    } catch (err) {
+      toast.error("Rejection failed: " + (err as Error).message);
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   const toggleRejectionField = (field: string) => {
@@ -421,16 +464,24 @@ export default function ApproveUsersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={approveUser.isPending}>
+            <AlertDialogCancel disabled={approveUser.isPending || isApproving}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
               onClick={confirmApprove}
               className="bg-green-600 hover:bg-green-700"
-              disabled={approveUser.isPending}
+              disabled={approveUser.isPending || isApproving}
             >
-              <Shield className="h-4 w-4 mr-0" /> Approve
-            </AlertDialogAction>
+              {approveUser.isPending || isApproving ? (
+                <Loader
+                  size="sm"
+                  className="border-white border-t-transparent"
+                />
+              ) : (
+                <Shield className="h-4 w-4" />
+              )}
+              Approve User
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -500,13 +551,24 @@ export default function ApproveUsersPage() {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogCancel disabled={rejectUser.isPending || isRejecting}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
               onClick={confirmReject}
               className="bg-red-600 hover:bg-red-700"
+              disabled={rejectUser.isPending || isRejecting}
             >
-              <X className="h-4 w-4 mr-2" /> Reject
-            </AlertDialogAction>
+              {rejectUser.isPending || isRejecting ? (
+                <Loader
+                  size="sm"
+                  className="border-white border-t-transparent"
+                />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+              Reject
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

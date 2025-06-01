@@ -27,6 +27,7 @@ import CreateStateElectionPage from "@/pages/create-elections/state/state.tsx";
 import CreateConstituencyElectionPage from "@/pages/create-elections/constituency.tsx";
 import LoginPage from "./pages/login/login.tsx";
 import AdminDashboard from "./pages/admin/page.tsx";
+import TransactionsPage from "./pages/transactions/page.tsx";
 
 function App() {
   const { isProfileComplete } = useWallet();
@@ -52,6 +53,7 @@ function App() {
         <Route path="/browse/parties" element={<PartiesPage />} />
         <Route path="/parties/:id" element={<PartyDetailsPage />} />
         <Route path="/parties/:id/edit" element={<ManagePartyMembersPage />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />

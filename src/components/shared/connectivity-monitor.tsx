@@ -15,7 +15,7 @@ export const ConnectivityStatus = () => {
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
           className={cn(
-            "fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg flex items-center gap-3",
+            "fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg flex items-center gap-3 cursor-not-allowed select-none",
             isOnline ? "bg-green-500 text-white" : "bg-red-500 text-white"
           )}
         >

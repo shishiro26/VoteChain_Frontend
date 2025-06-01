@@ -33,6 +33,8 @@ import { useSearchParams } from "react-router";
 import Pagination from "@/components/shared/pagination";
 import { Loader } from "@/components/ui/loader";
 import { toast } from "sonner";
+import { getElectionContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
 
 type Party = {
   id: string;
@@ -80,15 +82,15 @@ export default function DeclareResultsPage() {
   );
   const [declareDialogOpen, setDeclareDialogOpen] = useState(false);
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const [isPosting, setIsPosting] = useState(false);
 
   const { data, isLoading } = useGetElectionResultsQuery({
-    page: 1,
+    page: currentPage,
     limit: 3,
     sortBy: "createdAt:desc",
   });
 
   const declareResult = useDeclareResultMutation();
-
   const totalPages = data?.query?.totalPages || 1;
 
   const goToPage = (page: number) => {
@@ -126,25 +128,49 @@ export default function DeclareResultsPage() {
     setDeclareDialogOpen(true);
   };
 
-  const confirmDeclareResult = () => {
-    if (!selectedElection) return;
-    declareResult.mutate(
-      {
-        electionId: selectedElection.id,
-      },
-      {
-        onSuccess: () => {
-          toast.success(
-            `Results for ${selectedElection.title} declared successfully!`,
-            {
-              duration: 3000,
-            }
-          );
-          setDeclareDialogOpen(false);
-          setSelectedElection(null);
+  const confirmDeclareResult = async () => {
+    try {
+      if (!selectedElection) return;
+      setIsPosting(true);
+      const electionContract = await getElectionContract();
+      const tx = await electionContract.declareResult(
+        parseInt(selectedElection.id.slice(-8), 16)
+      );
+      const receipt = await tx.wait();
+
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "ELECTION RESULT",
+      };
+
+      declareResult.mutate(
+        {
+          electionId: selectedElection.id,
         },
-      }
-    );
+        {
+          onSuccess: async () => {
+            setDeclareDialogOpen(false);
+            setSelectedElection(null);
+            await api.post("/api/v1/auth/create-transaction", payload);
+            toast.success(
+              `Results for ${selectedElection.title} declared successfully!`,
+              {
+                duration: 3000,
+              }
+            );
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error declaring result:", error);
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
@@ -357,9 +383,9 @@ export default function DeclareResultsPage() {
             <Button
               onClick={confirmDeclareResult}
               className="bg-primary hover:bg-primary/90"
-              disabled={declareResult.isPending}
+              disabled={declareResult.isPending || isPosting}
             >
-              {declareResult.isPending ? (
+              {declareResult.isPending || isPosting ? (
                 <Loader
                   size="sm"
                   className="border-white border-t-transparent"

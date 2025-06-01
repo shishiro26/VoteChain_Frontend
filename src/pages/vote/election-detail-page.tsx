@@ -14,6 +14,8 @@ import { useCastVoteMutation, useGetElectionByElectionIdQuery } from "@/api";
 import { toast } from "sonner";
 import NotFound from "@/components/shared/not-found";
 import { useWallet } from "@/store/useWallet";
+import { getElectionContract } from "@/utils/getContracts";
+import { api } from "@/api/axios";
 
 export default function ElectionDetailPage() {
   // const ATTEMPT_STORAGE_KEY = "aadhaar_verification_attempts";
@@ -24,7 +26,7 @@ export default function ElectionDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname.split("/").pop() || "";
-
+  const [isVoting, setIsVoting] = useState(false);
   // const [isOpen, setIsOpen] = useState(false);
   // const [aadharVerified, setAadharVerified] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -76,37 +78,59 @@ export default function ElectionDetailPage() {
   };
 
   const handleVote = async (selectedCandidateId: string) => {
-    castVote.mutate(
-      {
-        electionId: election.id,
-        candidateId: selectedCandidateId,
-      },
-      {
-        onSuccess: () => {
-          if (isFullscreen) {
-            exitFullScreen();
-            election.hasVoted = true;
-          }
-          const timer = setTimeout(() => {
-            toast.success("Vote cast successfully!");
-          }, 1000);
+    try {
+      setIsVoting(true);
+      const electionContract = await getElectionContract();
+      const tx = await electionContract.vote(
+        parseInt(election.id.slice(-8), 16),
+        election.candidates.find(
+          (c: { id: string; user: { walletAddress: string } }) =>
+            c.id === selectedCandidateId
+        ).user.walletAddress
+      );
 
-          return () => clearTimeout(timer);
+      const receipt = await tx.wait();
+      const payload = {
+        transactionHash: receipt.hash,
+        from: receipt.from,
+        to: receipt.to,
+        blockNumber: receipt.blockNumber,
+        status: receipt.status === 1 ? "SUCCESS" : "FAILED",
+        amount: receipt.gasUsed.toString(),
+        type: "VOTE",
+      };
+
+      castVote.mutate(
+        {
+          electionId: election.id,
+          candidateId: selectedCandidateId,
         },
-      }
-    );
+        {
+          onSuccess: async () => {
+            await api.post("/api/v1/auth/create-transaction", payload);
+            if (isFullscreen) {
+              exitFullScreen();
+              election.hasVoted = true;
+            }
+            const timer = setTimeout(() => {
+              toast.success("Vote cast successfully!");
+            }, 1000);
+
+            return () => clearTimeout(timer);
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error casting vote:", error);
+      toast.error("Failed to cast vote. Please try again.");
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   if (isError) {
     return <NotFound text="Election not found" link="/vote" />;
   }
-
-  console.log("election.constituency.id", election?.constituency.id);
-  console.log(
-    "profile.location.constituencyId",
-    profile?.location.constituencyId
-  );
-  console.log("Profile status", profile?.location);
 
   return (
     <div
@@ -129,6 +153,7 @@ export default function ElectionDetailPage() {
         <VotingInterface
           election={election}
           isLoading={castVote.isPending}
+          isVoting={isVoting}
           onVote={handleVote}
           onExit={exitFullScreen}
         />
