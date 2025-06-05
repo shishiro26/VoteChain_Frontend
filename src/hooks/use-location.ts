@@ -3,8 +3,10 @@ import { useWallet } from "@/store/useWallet";
 import { toast } from "sonner";
 import { api } from "@/api/axios";
 import { getAuthContract } from "@/utils/getContracts";
+import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
+const ML_API = import.meta.env.VITE_ML_API_URL;
 
 export const useStatesQuery = () => {
   return useQuery({
@@ -31,33 +33,43 @@ export const useDistrictsQuery = (state_id: string) => {
   });
 };
 
-export const useMandalsQuery = (district_id: string) => {
+export const useMandalsQuery = (districtId?: string | null) => {
   return useQuery({
-    queryKey: ["mandals", district_id],
+    queryKey: ["mandals", districtId],
     queryFn: async () => {
-      const res = await api.get(
-        `${API}/api/v1/location/mandals/${district_id}`
-      );
+      const res = await api.get(`${API}/api/v1/location/mandals/${districtId}`);
       return res.data.data;
     },
-    enabled: district_id !== "",
+    enabled: Boolean(districtId),
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
 };
 
-export const useConstituenciesQuery = (mandal_id: string) => {
+export const useConstituenciesQuery = (mandalId?: string | null) => {
   return useQuery({
-    queryKey: ["constituencies", mandal_id],
+    queryKey: ["constituencies", mandalId],
     queryFn: async () => {
       const res = await api.get(
-        `${API}/api/v1/location/constituencies/${mandal_id}`
+        `${API}/api/v1/location/constituencies/${mandalId}`
       );
       return res.data.data;
     },
-    enabled: mandal_id !== "",
+    enabled: Boolean(mandalId),
     staleTime: 1000 * 60 * 60,
     retry: 1,
+  });
+};
+
+export const useModelMutation = () => {
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await axios.post(`${ML_API}/process_and_verify`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        validateStatus: () => true,
+      });
+      return res;
+    },
   });
 };
 

@@ -39,9 +39,9 @@ export const updateUserSchema = z.object({
     .regex(/^\d+$/, "Aadhar number must contain only digits"),
 
   state: locationSchema,
-  district: locationSchema,
-  mandal: locationSchema,
-  constituency: locationSchema,
+  district: locationSchema.nullable(),
+  mandal: locationSchema.nullable(),
+  constituency: locationSchema.nullable(),
 
   profileImage: z
     .any()
